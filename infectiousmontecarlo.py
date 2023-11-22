@@ -18,7 +18,7 @@ from datetime import datetime
 def create_lattice(lattice_length, T_num, B_num):
     lattice = np.zeros([lattice_length, lattice_length])
 
-    # Place T's randomly
+    # Place T's randomly randonlier maybe
     t_coords = np.empty((2, 0), dtype=int)  # Initialize as an empty array
     while t_coords.shape[1] < T_num:  # Check the number of columns
         t = np.array([[np.random.randint(lattice_length)], [np.random.randint(lattice_length)]])
