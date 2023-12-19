@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
 
-# In[220]:
+#%%
 
 
 import numpy as np
@@ -34,7 +32,11 @@ def create_lattice(size, T_num, B_num):
     lattice[t_coords[0], t_coords[1]] = 1
     lattice[b_coords[0], b_coords[1]] = 2
 
-    return lattice, t_coords, b_coords, empty_coords
+    # allocate (with -1's) b_coords
+    b_alloc = -1*np.ones([2,size**2],dtype=int)
+    b_alloc[:,0:B_num] = b_coords
+
+    return lattice, t_coords, b_alloc, empty_coords
 
 
 #%%
@@ -52,7 +54,6 @@ def lattice_plots(lattice_history, selected_indices):
         plt.title("Lattice with T's (Blue) and B's (Red)")
         plt.show()
         
-
 
 #%%
 
@@ -148,7 +149,7 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
         #probability = np.float128(np.exp(-(Ediff -muB*pos2.shape[1] -muT*pos1.shape[1])/T) )
         #probability = mp.exp(-(Ediff - muB * pos2.shape[1] - muT * pos1.shape[1]) / T)
         probability = np.exp(-Ediff/T)
-        print('p_B:', probability)
+        #print('p_B:', probability)
         if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
             add = True 
         else:
@@ -158,11 +159,11 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
         lattice[pb[0], pb[1]] = 2
         #print("before",pos2, pb)
         pos0 = np.delete(pos0, colb, axis=1)
-        pos2 = np.hstack((pos2, np.array([pb]).reshape(-1, 1)))
-        #print(pos0)
+       # pos2 = np.hstack((pos2, np.array([pb]).reshape(-1, 1)))
+        first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
+        pos2[:,first_negative_column] = pb
+        #print(pos2)
         E_total = E_total + Ediff
-        E_total = float(E_total)
-        #print(E_total)
         #print("Ediff:", Ediff)
         
     else:
@@ -211,7 +212,6 @@ def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
         pos0[:,col0] = [p1[0], p1[1]]
         #print(pos1)
         E_total = E_total + Ediff
-        E_total = float(E_total)
         #print("Ediff:", Ediff)
         
     else:
@@ -301,11 +301,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 200
+num_runs = 100
 #Temp = 0.2
 T = np.arange(20,0.01,-0.5)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 50
+size = 20
 
 T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = 1
