@@ -131,25 +131,24 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
     
     #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
     ID_B = 2
-    Efin = energy(lattice, ID_B, pb, eps) #evaluate neighbouring energy
+    Efin = energy(lattice, ID_B, pb, eps) + muB # energy from interaction and chemical if placed
     #ID_in = lattice[pb[0], pb[1]]
     ID_empty = 0
     Ein = energy(lattice,ID_empty, pb, eps) #evaluate neighbouring energy before
     
-    #muT, muB = 1, 2
-    
     #print("Efin , Ein", Efin, Ein)
-    Ediff = Efin - Ein
+    Ediff = Efin - Ein 
     #print("Ediff ", Ediff)
 
     if Ediff < 0 :
         add = True
     
     else:
-        mp.dps = 128
+        #mp.dps = 128
         #probability = np.float128(np.exp(-(Ediff -muB*pos2.shape[1] -muT*pos1.shape[1])/T) )
-        probability = mp.exp(-(Ediff - muB * pos2.shape[1] - muT * pos1.shape[1]) / T)
-       # print('p_B:', probability)
+        #probability = mp.exp(-(Ediff - muB * pos2.shape[1] - muT * pos1.shape[1]) / T)
+        probability = np.exp(-Ediff/T)
+        print('p_B:', probability)
         if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
             add = True 
         else:
@@ -161,7 +160,7 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
         pos0 = np.delete(pos0, colb, axis=1)
         pos2 = np.hstack((pos2, np.array([pb]).reshape(-1, 1)))
         #print(pos0)
-        E_total = E_total + Ediff + muB
+        E_total = E_total + Ediff
         E_total = float(E_total)
         #print(E_total)
         #print("Ediff:", Ediff)
@@ -302,7 +301,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10_000
+num_runs = 200
 #Temp = 0.2
 T = np.arange(20,0.01,-0.5)
 #T = np.arange(.1,.01,-0.1) ##Test
@@ -310,7 +309,7 @@ size = 50
 
 T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = 1
-muT, muB = -1, -2
+muT, muB = -1, -1
 
 BB_int = 1      # interaction energy between bacterias
 TT_int = -1      # interaction energy between T-cells
@@ -323,9 +322,7 @@ interaction_matrix = np.array([
 
 lattice, E_history, B_num, pos2t, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
-
-
-# In[29]:
+#%%
 
 
 plt.figure()
@@ -336,8 +333,7 @@ plt.ylim(1240,1260)
 plt.show()
 
 
-# In[218]:
-
+#%%
 
 def mean_energy(T, E_history, ind_equilibrium):
     
@@ -356,7 +352,7 @@ ind_equi = int((3/8)*num_runs) # index where equilibrium is assumed.
 E_mean, E_var = mean_energy(T, E_history, ind_equi)
 
 
-# In[215]:
+#%%
 
 
 plt.figure()
@@ -368,22 +364,13 @@ plt.show()
 #lattice_plots(lattice, np.arange(0,100,5))
 
 
-# In[219]:
-
-
+#%%
 # SAVE DATA 
 
-current_dir = os.getcwd()
-
-# directory of Data folder
-new_dir = f'{current_dir}/'
-
-# Save data there
-file_spec = '1e4_lala'
+file_spec = '1e4_test'
 file_name = f'{run_name}_{file_spec}.npz'
-file_dir = f'{new_dir}{file_name}'
 
-np.savez(file_dir, 
+np.savez(file_name, 
          T = T,
          eps = interaction_matrix,
          muT = muT,
@@ -395,11 +382,4 @@ np.savez(file_dir,
          E_variance = E_var,
          num_runs = num_runs,        
         )
-#np.savez(file_dir, T = T, num_runs = num_runs, size = size, eps=eps, T_num_in , B_num = B_num, E_mean = E_mean, E_variance=E_var, execution_time=execution_time )
-
-
-# In[ ]:
-
-
-
 
