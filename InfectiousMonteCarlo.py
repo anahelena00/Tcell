@@ -56,12 +56,29 @@ def lattice_plots(lattice_history, selected_indices):
         
 
 #%%
+def position_random(pos): 
 
+    if np.any(pos < 0):
+       num_coords = np.where(np.any(pos < 0, axis=0))[0][0] - 1
+       if num_coords == 0:
+           col = num_coords
+           #print('1',col)
+        # if there are more than 1 set of coordinates
+       if num_coords > 0: 
+           col = np.random.randint(pos[:,0:num_coords].shape[1])
+           #print('2',col)
+    else:
+        col = np.random.randint(pos.shape[1])
+        #print('3',col)
+    p = pos[:,col]
+    return p, col
+
+"""
 def position_random(pos): 
     col = np.random.randint(pos.shape[1]) 
     p = pos[:,col]
     return p, col
-
+"""
 
 #%%
 
