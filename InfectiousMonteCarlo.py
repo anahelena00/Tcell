@@ -13,6 +13,40 @@ from mpmath import mp
 
 
 #%%
+
+def create_lattice(size, T_num, B_num):
+    lattice = np.zeros([size,size], dtype=int)
+    rng = np.random.default_rng()
+    lat_idx = np.argwhere(lattice == 0)
+    #print('lattice indices before shuffling',lat_idx)
+    rng.shuffle(lat_idx)
+    #print('lattice indices after shuffling',lat_idx)
+    lat_idx = lat_idx.T
+    t_coords = lat_idx[:,0:T_num]
+    #print('t: \n',t_coords)
+    b_coords = lat_idx[:,T_num:T_num+B_num]
+    #print('b: \n',b_coords)
+
+    # number of holes
+    hole_num = int(size**2 - T_num - B_num)
+    #print(hole_num)
+    empty_coords = -1*np.ones([2,size**2], dtype = int)
+   # print(empty_coords, empty_coords.shape[1])
+    empty_coords[:,0:hole_num] = lat_idx[:,T_num+B_num:]
+    #print(empty_coords, empty_coords.shape[1])
+    #print('O: \n',empty_cords)
+
+    # allocate (with -1's) b_coords
+    b_alloc = -1*np.ones([2,size**2],dtype=int)
+    b_alloc[:,0:B_num] = b_coords
+
+    # Assign values to coordinates
+    lattice[t_coords[0], t_coords[1]] = 1
+    lattice[b_coords[0], b_coords[1]] = 2
+
+    return lattice, t_coords, b_alloc, empty_coords
+
+"""
 def create_lattice(size, T_num, B_num):
     lattice = np.zeros([size,size], dtype=int)
     rng = np.random.default_rng()
@@ -37,7 +71,7 @@ def create_lattice(size, T_num, B_num):
     b_alloc[:,0:B_num] = b_coords
 
     return lattice, t_coords, b_alloc, empty_coords
-
+"""
 
 #%%
 # showing lattices as they evolve 
