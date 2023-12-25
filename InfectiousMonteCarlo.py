@@ -411,8 +411,52 @@ def gridprint(lattice,lattice_length):
 
 
 #%%
+def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
+ 
+    E_history = {}
+    Tcell = np.zeros(len(Temp))
+    B_num = np.zeros(len(Temp))
+    pos2t= []
+    for ind, t in enumerate(Temp):
+        E_history_for_Temp = []
+        lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
+        E_lattice = lattice_energy(lattice, eps, muT, muB)
+        
+        for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
+            E_history_for_Temp.append(E_lattice)
 
+            if np.all(pos0 < 0):
+                #print(pos0)
+                print("Lattice is full at iteration:", i)
+            else:
+                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
+                                                lattice, pos1, pos0, t, E_lattice, eps)
+                lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
+                                                lattice, pos2, pos1, pos0, t, E_lattice, eps, muT, muB)  
+           
+        pos2t.append(pos2.shape[1])
+        #gridprint(lattice)
+            #pos0t.append(pos0)
+            #pos1t.append(pos1)
+        
+        Tcell[ind] = np.sum((pos1 != -1).all(axis=0))
+        B_num[ind] = np.sum((pos2 != -1).all(axis=0))
+        #Tcell.append(pos1.shape[1])   
 
+        E_history[t] = E_history_for_Temp.copy()
+        
+        #pos0_hist.append(pos0t)
+        #pos1_hist.append(pos1t)
+        #pos2_hist.append(pos2t)
+        
+    # Unique name for data file 
+    current_datetime = datetime.now()
+    datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
+    run_name = f'{datetime_str}'
+    
+    return lattice, E_history, B_num, pos2t, run_name #, pos0_hist, pos1_hist, pos2_hist
+
+"""
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
     
     
@@ -468,7 +512,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     
     return lattice, E_history, B_num, pos2t, run_name #, pos0_hist, pos1_hist, pos2_hist
     
-
+"""
 
 #%%
 
