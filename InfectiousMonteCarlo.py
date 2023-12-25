@@ -310,6 +310,52 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
 # pos0 are coordinates of holes in the lattice 
 
 def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
+   
+    p1, col1 = position_random(pos1)
+    
+    ID_in = lattice[p1[0], p1[1]]
+    assert ID_in == 1, f"ID_in not 1 but {ID_in}"
+    Ein = energy(lattice,ID_in, p1, eps)
+    
+    p0, col0 = position_random(pos0)
+    assert lattice[p0[0],p0[1]] == 0 , f"Found position is not empty"
+    # seeing what energy would be for particle if it moved the the chosen empty location
+    lattice[p1[0], p1[1]] = 0 # temporarily moving object so not to be seen as neighbor by itself
+    Efin = energy(lattice, ID_in, p0, eps)
+    #print("Efin , Ein", Efin, Ein)
+    Ediff = Efin - Ein
+
+
+    if Ediff < 0 :
+        move = True
+    
+    else:
+        probability = np.exp(-Ediff/T)
+        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
+            move = True 
+        else:
+            move = False
+        
+    if move: 
+        pos1 = pos1.copy()
+        pos1[:,col1] = [p0[0], p0[1]]
+        lattice[p0[0], p0[1]] = 1
+        # update arrays containing coordinates of 0's and 1's
+        pos0 = pos0.copy()
+        pos0[:,col0] = [p1[0], p1[1]]
+        assert lattice[pos1[0][col1],pos1[1][col1]] == 1, f"not 1 but: {lattice[pos1[0][col1],pos1[1][col1]]}"
+        assert lattice[pos0[0][col0],pos0[1][col0]] == 0, f"not 0 but: {lattice[pos0[0][col0],pos0[1][col0]]}"
+        E_total = E_total + Ediff
+        #print("Ediff:", Ediff)
+        
+    else:
+        lattice[p0[0], p0[1]] = 0
+        lattice[p1[0], p1[1]] = 1
+    #print(E_total, Ediff)
+    return lattice, pos1, pos0, E_total
+    
+"""
+def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
     #print("pos1before",pos1.shape)
     p1, col1 = position_random(pos1)
     
@@ -349,7 +395,7 @@ def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
         lattice[p1[0], p1[1]] = 1
     #print(E_total, Ediff)
     return lattice, pos1, pos0, E_total
-
+"""
 
 #%%
 
