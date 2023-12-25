@@ -209,9 +209,8 @@ def lattice_energy(lattice, eps, muT, muB):
 
 #%%
 
-def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB):
-    #print("pos1before",pos1.shape)
-    #print('pos0:', pos0)
+def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB):
+    
     pb, colb = position_random(pos0) #pick a hole to put bacteria
     
     assert lattice[pb[0],pb[1]] == 0
@@ -432,7 +431,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
                 lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
-                                                lattice, pos2, pos1, pos0, t, E_lattice, eps, muT, muB)  
+                                                lattice, pos2, pos0, t, E_lattice, eps, muB)  
            
         pos2t.append(pos2.shape[1])
         #gridprint(lattice)
