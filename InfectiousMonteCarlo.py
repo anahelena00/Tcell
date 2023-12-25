@@ -520,9 +520,9 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 100
+num_runs = 1000
 #Temp = 0.2
-T = np.arange(20,0.01,-0.5)
+T = np.arange(20,0.01,-4)
 #T = np.arange(.1,.01,-0.1) ##Test
 size = 20
 
@@ -570,7 +570,30 @@ def mean_energy(T, E_history, ind_equilibrium):
 ind_equi = int((3/8)*num_runs) # index where equilibrium is assumed. 
 E_mean, E_var = mean_energy(T, E_history, ind_equi)
 
+#%%
+def E_history_plot(E_history, T, num_runs):
 
+    yMin = min(E_history)-1
+    yMax = max(E_history)
+
+    E_keys = list(E_history.keys())
+    # Create subplots
+    fig, axes = plt.subplots(len(T), 1, figsize=(8, 2*len(T)))
+    fig.suptitle(f'hi there')
+    for i in range(len(T)):
+        ax = axes[i]
+        
+        T_formatted = f'{T[i]:.2f}'
+        ax.plot(np.arange(0, num_runs), E_history[E_keys[i]], '.', markersize = '1')
+        ax.set_yticks(np.arange(yMin, yMax, step = 20))
+        ax.set_ylabel(f'Energy (T = {T_formatted})')
+        #ax.set_xlabel('Iteration')
+        #ax.set_title()
+
+    plt.show()
+
+
+#E_history_plot(E_history, T, num_runs)
 #%%
 
 
@@ -578,7 +601,7 @@ plt.figure()
 plt.plot(T,E_mean,'o')
 plt.xlabel('T')
 plt.ylabel('U')
-plt.title(f'Size: {size} ,Runs: {num_runs}')
+plt.title(f'Size: {size}, Runs: {num_runs}')
 plt.show()
 #lattice_plots(lattice, np.arange(0,100,5))
 
