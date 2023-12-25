@@ -22,6 +22,37 @@ def create_lattice(size, T_num, B_num):
     rng.shuffle(lat_idx)
     #print('lattice indices after shuffling',lat_idx)
     lat_idx = lat_idx.T
+
+    # number of holes
+    hole_num = int(size**2 - T_num - B_num)
+    #print(hole_num)
+    assert hole_num + T_num + B_num == size**2
+    coor_0 = lat_idx[:,T_num+B_num:T_num+B_num+hole_num]
+    coor_B = lat_idx[:,T_num:T_num+B_num]
+    coor_T = lat_idx[:,0:T_num]
+
+    # Assign values to coordinates
+    lattice[coor_T[0], coor_T[1]] = 1
+    lattice[coor_B[0], coor_B[1]] = 2
+
+    pos0 = -1*np.ones([2,size**2], dtype = int)
+    pos0[:,0:hole_num] = coor_0
+    # 
+    posT = coor_T
+    # allocate (with -1's) b_coords
+    posB = -1*np.ones([2,size**2],dtype=int)
+    posB[:,0:B_num] = coor_B
+
+    return lattice, posT, posB, pos0
+"""    
+def create_lattice(size, T_num, B_num):
+    lattice = np.zeros([size,size], dtype=int)
+    rng = np.random.default_rng()
+    lat_idx = np.argwhere(lattice == 0)
+    #print('lattice indices before shuffling',lat_idx)
+    rng.shuffle(lat_idx)
+    #print('lattice indices after shuffling',lat_idx)
+    lat_idx = lat_idx.T
     t_coords = lat_idx[:,0:T_num]
     #print('t: \n',t_coords)
     b_coords = lat_idx[:,T_num:T_num+B_num]
@@ -45,6 +76,8 @@ def create_lattice(size, T_num, B_num):
     lattice[b_coords[0], b_coords[1]] = 2
 
     return lattice, t_coords, b_alloc, empty_coords
+
+"""
 
 """
 def create_lattice(size, T_num, B_num):
