@@ -209,7 +209,53 @@ def lattice_energy(lattice, eps, muT, muB):
 
 #%%
 
+def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB):
+    #print("pos1before",pos1.shape)
+    #print('pos0:', pos0)
+    pb, colb = position_random(pos0) #pick a hole to put bacteria
+    
+    assert lattice[pb[0],pb[1]] == 0
+    #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
+    ID_B = 2
+    Efin = energy(lattice, ID_B, pb, eps) + muB # energy from interaction and chemical if placed
+    #ID_in = lattice[pb[0], pb[1]]
+    ID_empty = 0
+    Ein = energy(lattice,ID_empty, pb, eps) #evaluate neighbouring energy before
+    
+    #print("Efin , Ein", Efin, Ein)
+    Ediff = Efin - Ein 
+    #print("Ediff ", Ediff)
 
+    if Ediff < 0 :
+        add = True
+    
+    else:
+        probability = np.exp(-Ediff/T)
+        #print('p_B:', probability)
+        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
+            add = True 
+        else:
+            add = False
+        
+    if add: 
+        lattice[pb[0], pb[1]] = 2
+        #print("before",pos2, pb)
+        #pos0 = np.delete(pos0, colb, axis=1)
+        #print('before', pos0, colb)
+        pos0[:,colb:-1] = pos0[:,colb+1:]
+        #print('after', pos0)
+        first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
+        pos2[:,first_negative_column] = pb
+        #print(pos2)
+        E_total = E_total + Ediff
+        #print("Ediff:", Ediff)
+        
+    else:
+        lattice[pb[0], pb[1]] = 0
+    #print(E_total, Ediff)
+    return lattice, pos2, pos0, E_total
+
+"""
 def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB):
     #print("pos1before",pos1.shape)
     pb, colb = position_random(pos0) #pick a hole to put bacteria
@@ -254,7 +300,7 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
         lattice[pb[0], pb[1]] = 0
     #print(E_total, Ediff)
     return lattice, pos2, pos0, E_total
-
+"""
 
 #%%
 
