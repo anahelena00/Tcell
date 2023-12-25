@@ -10,6 +10,7 @@ import time
 import os
 from datetime import datetime
 from mpmath import mp
+import matplotlib.colors as mcolors
 
 
 #%%
@@ -398,15 +399,14 @@ def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
 
 #%%
 
-
-def gridprint(lattice,lattice_length):
-    cmap = plt.cm.colors.ListedColormap(['white', 'blue', 'red'])
+def gridprint(lattice):
+    lattice_length = len(lattice)
+    cmap = plt.cm.colors.ListedColormap(['blue', 'white', 'red'])
     plt.imshow(lattice, cmap=cmap, extent=[0, lattice_length, 0, lattice_length])
-    plt.colorbar(ticks=[0, 1, 2], label="Legend")
+    plt.colorbar(ticks=[1, 0, 2], label="Legend")
     plt.title("Lattice with T's (Blue) and B's (Red)")
     #plt.grid(True, linewidth=0.5, color='black')
     plt.show()
-    return 0
 
 
 #%%
@@ -520,11 +520,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 1000
+num_runs = 100
 #Temp = 0.2
 T = np.arange(20,0.01,-4)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 20
+size = 10
 
 T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = 1
@@ -595,7 +595,6 @@ def E_history_plot(E_history, T, num_runs):
 
 #E_history_plot(E_history, T, num_runs)
 #%%
-
 
 plt.figure()
 plt.plot(T,E_mean,'o')
