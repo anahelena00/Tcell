@@ -236,7 +236,11 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB):
         else:
             add = False
         
-    if add: 
+    if add: #takes from the begining of one and adds to the ending of another
+        #print("pos2 before")
+        #print(pos2)
+        #print("pos0 before:", pos0)
+        #print(pos0)
         lattice[pb[0], pb[1]] = 2
         #print("before",pos2, pb)
         #pos0 = np.delete(pos0, colb, axis=1)
@@ -245,6 +249,10 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB):
         #print('after', pos0)
         first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
         pos2[:,first_negative_column] = pb
+        #print("pos2 after")
+        #print(pos2)
+        #print("pos0 after:", pos0)
+        #print(pos0)
         #print(pos2)
         E_total = E_total + Ediff
         #print("Ediff:", Ediff)
@@ -308,8 +316,11 @@ def evaluate_particle_removeB(lattice, pos2, pos0, T, E_total, eps, muB):
     
     p0, col0 = position_random(pos2) #pick a bacteria to turn into a hole(kill)
     print("p0:",p0)
+    print(pos2)
+    #print("lattice[p0[0], p0[1]]:", lattice[p0[0], p0[1]])
     #if condition returns False, AssertionError is raised:
     assert lattice[p0[0],p0[1]] == 2
+    #print(  lattice[p0[0],p0[1]] == 2)
     
     #print(p0)
     #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
@@ -338,22 +349,28 @@ def evaluate_particle_removeB(lattice, pos2, pos0, T, E_total, eps, muB):
         else:
             remove = False
         
-    if remove: 
+    if remove:  ###I HAVE TO CHANGE POS0 WHICH ISNT CHANGING
+        print("pos2 before")
         print(pos2)
-        print("remove")
+        print("pos0 before")
+        print(pos0)
+        #print("remove")
         lattice[p0[0], p0[1]] = 0
         #print("before",pos2, pb)
-        # pos0 = np.delete(pos0, colb, axis=1)
-         #print('before', pos0, colb)
-         
+        #print('before', pos0, colb)
+        #print('after', pos0)
         # Shift the values in columns from col0+1 to the end one position to the left.
-        pos2 [:,col0:-1] = pos2[:,col0+1:]
+        pos2 [:,col0:-1] = pos2[:,col0+1:] ##Here you remove bacteria from pos2
+        print("pos2 after")
+        print(pos2)
         #print('after', pos0)
         first_negative_column = np.where(np.any(pos0 < 0, axis=0))[0][0]
         # Find the index of the first negative value along the columns in pos0.
-        
+        #pos0 = pos0.copy()
         pos0[:,first_negative_column] = p0
-        print(pos2)
+        
+        print("pos0 after")
+        print(pos0)
         E_total = E_total + Ediff_H
         #print("Ediff:", Ediff)
         
@@ -469,21 +486,33 @@ def gridprint(lattice):
     #plt.grid(True, linewidth=0.5, color='black')
     plt.show()
 
+''' 
 def Attempt_moveB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_number):
     add, remove, move = False, False, True
-    while move:
+    count =0
+    while count <10:
         remove = bool(random.getrandbits(1))
-        print(remove)
-        if remove and B_number>0:
+        print(remove)   
+        if remove:
           print("remove", B_number)
           lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(lattice, pos2, pos0, t, E_lattice, eps, muB)
-        else:
-            print("add")
-            lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB)
-            add = True
-            B_number = B_number +1
-    move = not (remove and B_number > 0) and not add
+          B_number= B_number -1
+          move = False
+        elif not remove:
+          print("add")
+          lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB)
+          B_number = B_number +1
+          move = False
+        #if B_number == 0:
+            #move = False
+        count=count+1
+    #move = not (remove and B_number > 0) and not add
+    #move = False
     return lattice, pos2, pos0, E_lattice
+'''
+def Attempt_changeB():
+    remove = bool(random.getrandbits(1))
+    return remove
 ###MAKE REMOVE BACTERIA FUNCTION!!!
 #%%
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
@@ -501,14 +530,20 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
             E_history_for_Temp.append(E_lattice)
             
             B_number =np.sum((pos2 != -1).all(axis=0))
-            #print(B_number)
+            print(B_number)
             if np.all(pos0 < 0):
                 #print(pos0)
                 print("Lattice is full at iteration:", i)
+            elif B_number == 0:
+                print("No bacteria left")
             else:
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
-                lattice, pos2, pos0, E_lattice = Attempt_moveB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_number)
+                remove = Attempt_changeB()
+                if remove:
+                    lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(lattice, pos2, pos0, t, E_lattice, eps, muB)
+                else:
+                    lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB)
                 #lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB) 
                 
                 #lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(lattice, pos2, pos0, t, E_lattice, eps, muB)  
@@ -603,12 +638,12 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 
 num_runs = 100
 #Temp = 0.2
-T = np.arange(20,0.01,-4)
-#T = np.arange(.1,.01,-0.1) ##Test
+#T = np.arange(20,0.01,-4)
+T = np.arange(.1,.01,-0.1) ##Test
 size = 10
 
 T_num_in = int(size**2/2)    # number of initial T-cells
-B_num_in = 1
+B_num_in = 3
 muT, muB = -1, -1
 
 BB_int = 1      # interaction energy between bacterias
