@@ -10,7 +10,6 @@ import time
 import os
 from datetime import datetime
 from mpmath import mp
-import matplotlib.colors as mcolors
 
 
 #%%
@@ -242,9 +241,11 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB):
         #print("before",pos2, pb)
         #pos0 = np.delete(pos0, colb, axis=1)
         #print('before', pos0, colb)
+        pos0 = pos0.copy()
         pos0[:,colb:-1] = pos0[:,colb+1:]
         #print('after', pos0)
         first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
+        pos2 = pos2.copy()
         pos2[:,first_negative_column] = pb
         #print(pos2)
         E_total = E_total + Ediff
@@ -411,7 +412,9 @@ def gridprint(lattice):
 
 #%%
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
- 
+    
+    
+
     E_history = {}
     Tcell = np.zeros(len(Temp))
     B_num = np.zeros(len(Temp))
@@ -421,6 +424,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
         E_lattice = lattice_energy(lattice, eps, muT, muB)
         
+        #gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
 
@@ -522,7 +526,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 
 num_runs = 100
 #Temp = 0.2
-T = np.arange(20,0.01,-4)
+T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
 size = 10
 
@@ -539,6 +543,7 @@ interaction_matrix = np.array([
     [0, BT_int, BB_int]
 ])
 
+#%%
 lattice, E_history, B_num, pos2t, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
 #%%
