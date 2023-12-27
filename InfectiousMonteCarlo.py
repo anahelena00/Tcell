@@ -481,6 +481,7 @@ def Attempt_moveB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_number):
             print("add")
             lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB)
             add = True
+            B_number = B_number +1
     move = not (remove and B_number > 0) and not add
     return lattice, pos2, pos0, E_lattice
 ###MAKE REMOVE BACTERIA FUNCTION!!!
