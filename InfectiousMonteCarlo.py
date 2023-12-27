@@ -10,6 +10,7 @@ import os
 from datetime import datetime
 from mpmath import mp
 import matplotlib.colors as mcolors
+import random
 
 #%%
 
@@ -302,78 +303,61 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
 
 #%%
 
-####CHANGE!!!
-def evaluate_particle_changeB(lattice, pos2, pos0, T, E_total, eps, muB):
+
+def evaluate_particle_removeB(lattice, pos2, pos0, T, E_total, eps, muB):
     
-    pb, colb = position_random(pos0) #pick a hole to put bacteria
     p0, col0 = position_random(pos2) #pick a bacteria to turn into a hole(kill)
-    
+    print("p0:",p0)
     #if condition returns False, AssertionError is raised:
-    assert lattice[pb[0],pb[1]] == 0
     assert lattice[p0[0],p0[1]] == 2
     
+    #print(p0)
     #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
-    ID_B = 2
-    Efin_B = energy(lattice, ID_B, pb, eps) + muB # energy from interaction and chemical if placed
-    #ID_in = lattice[pb[0], pb[1]]
-    ID_empty = 0
-    Ein_B = energy(lattice,ID_empty, pb, eps) #evaluate neighbouring energy before
-    
+
     ID_H = 0
-    Efin_H = energy(lattice, ID_H, pb, eps) + muB # energy from interaction and chemical if placed
+    Efin_H = energy(lattice, ID_H, p0, eps) + muB # energy from interaction and chemical if placed
     #ID_in = lattice[pb[0], pb[1]]
     ID_full = 2
-    Ein_H = energy(lattice,ID_full, pb, eps) #evaluate neighbouring energy before
+    Ein_H = energy(lattice,ID_full, p0, eps) #evaluate neighbouring energy before
     
     #print("Efin , Ein", Efin, Ein)
-    Ediff_B = Efin_B - Ein_B 
-    Ediff_H = Efin_H - Ein_H
+
+    Ediff_H =  Ein_H- Efin_H 
     #print("Ediff ", Ediff)
     
-    Minimum_Energy = max(-Ediff_B, -Ediff_H) #add minus because the energies are negative
+    #Minimum_Energy = max(-Ediff_B, -Ediff_H) #add minus because the energies are negative
     add, remove, move = False, False,False
-    if Minimum_Energy< 0 :
-        move = True
+    if Ediff_H< 0 :
+        remove = True
 
     else:
-        probability = np.exp(-Minimum_Energy/T)
+        probability = np.exp(-Ediff_H/T)
         #print('p_B:', probability)
         if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
-            move = True 
+            remove = True 
         else:
-            move = False
+            remove = False
         
-    if move: 
-        ###CHANGE HERE
-        if Minimum_Energy == -Ediff_B:
-            lattice[pb[0], pb[1]] = 2
-            #print("before",pos2, pb)
-            # pos0 = np.delete(pos0, colb, axis=1)
-            #print('before', pos0, colb)
-            pos0[:,colb:-1] = pos0[:,colb+1:]
-            #print('after', pos0)
-            first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
-            pos2[:,first_negative_column] = pb
-            #print(pos2)
-            E_total = E_total + Minimum_Energy
-            #print("Ediff:", Ediff)
-        elif Minimum_Energy == -Ediff_H:
-            lattice[p0[0], p0[1]] = 0
-            #print("before",pos2, pb)
-            # pos0 = np.delete(pos0, colb, axis=1)
-            #print('before', pos0, colb)
-            pos2[:,col0:-1] = pos2[:,col0+1:]
-            #print('after', pos0)
-            first_negative_column = np.where(np.any(pos0 < 0, axis=0))[0][0]
-            pos0[:,first_negative_column] = p0
-            #print(pos2)
-            E_total = E_total + Minimum_Energy
-            #print("Ediff:", Ediff)
-        else:
-            print("Ups! Something went wrong!")
+    if remove: 
+        print(pos2)
+        print("remove")
+        lattice[p0[0], p0[1]] = 0
+        #print("before",pos2, pb)
+        # pos0 = np.delete(pos0, colb, axis=1)
+         #print('before', pos0, colb)
+         
+        # Shift the values in columns from col0+1 to the end one position to the left.
+        pos2 [:,col0:-1] = pos2[:,col0+1:]
+        #print('after', pos0)
+        first_negative_column = np.where(np.any(pos0 < 0, axis=0))[0][0]
+        # Find the index of the first negative value along the columns in pos0.
+        
+        pos0[:,first_negative_column] = p0
+        print(pos2)
+        E_total = E_total + Ediff_H
+        #print("Ediff:", Ediff)
         
     else:
-        lattice[pb[0], pb[1]] = 0
         lattice[p0[0], p0[1]] = 2
     #print(E_total, Ediff)
     return lattice, pos2, pos0, E_total
@@ -485,8 +469,20 @@ def gridprint(lattice):
     #plt.grid(True, linewidth=0.5, color='black')
     plt.show()
 
-def remove_bacteria(lattice, eps, muT, muB):
-    return 0
+def Attempt_moveB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_number):
+    add, remove, move = False, False, True
+    while move:
+        remove = bool(random.getrandbits(1))
+        print(remove)
+        if remove and B_number>0:
+          print("remove", B_number)
+          lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(lattice, pos2, pos0, t, E_lattice, eps, muB)
+        else:
+            print("add")
+            lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB)
+            add = True
+    move = not (remove and B_number > 0) and not add
+    return lattice, pos2, pos0, E_lattice
 ###MAKE REMOVE BACTERIA FUNCTION!!!
 #%%
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
@@ -502,15 +498,19 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
-
+            
+            B_number =np.sum((pos2 != -1).all(axis=0))
+            #print(B_number)
             if np.all(pos0 < 0):
                 #print(pos0)
                 print("Lattice is full at iteration:", i)
             else:
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
+                lattice, pos2, pos0, E_lattice = Attempt_moveB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_number)
                 #lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB) 
-                lattice, pos2, pos0, E_lattice = evaluate_particle_changeB(lattice, pos2, pos0, t, E_lattice, eps, muB)  
+                
+                #lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(lattice, pos2, pos0, t, E_lattice, eps, muB)  
            
         #pos2t.append(pos2.shape[1])
         #gridprint(lattice)
