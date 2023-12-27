@@ -1,7 +1,6 @@
 
 #%%
 
-
 import numpy as np
 import random
 import matplotlib.pyplot as plt
@@ -11,7 +10,6 @@ import os
 from datetime import datetime
 from mpmath import mp
 import matplotlib.colors as mcolors
-
 
 #%%
 
@@ -304,6 +302,85 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
 
 #%%
 
+####CHANGE!!!
+def evaluate_particle_changeB(lattice, pos2, pos0, T, E_total, eps, muB):
+    
+    pb, colb = position_random(pos0) #pick a hole to put bacteria
+    p0, col0 = position_random(pos2) #pick a bacteria to turn into a hole(kill)
+    
+    #if condition returns False, AssertionError is raised:
+    assert lattice[pb[0],pb[1]] == 0
+    assert lattice[p0[0],p0[1]] == 2
+    
+    #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
+    ID_B = 2
+    Efin_B = energy(lattice, ID_B, pb, eps) + muB # energy from interaction and chemical if placed
+    #ID_in = lattice[pb[0], pb[1]]
+    ID_empty = 0
+    Ein_B = energy(lattice,ID_empty, pb, eps) #evaluate neighbouring energy before
+    
+    ID_H = 0
+    Efin_H = energy(lattice, ID_H, pb, eps) + muB # energy from interaction and chemical if placed
+    #ID_in = lattice[pb[0], pb[1]]
+    ID_full = 2
+    Ein_H = energy(lattice,ID_full, pb, eps) #evaluate neighbouring energy before
+    
+    #print("Efin , Ein", Efin, Ein)
+    Ediff_B = Efin_B - Ein_B 
+    Ediff_H = Efin_H - Ein_H
+    #print("Ediff ", Ediff)
+    
+    Minimum_Energy = max(-Ediff_B, -Ediff_H) #add minus because the energies are negative
+    add, remove, move = False, False,False
+    if Minimum_Energy< 0 :
+        move = True
+
+    else:
+        probability = np.exp(-Minimum_Energy/T)
+        #print('p_B:', probability)
+        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
+            move = True 
+        else:
+            move = False
+        
+    if move: 
+        ###CHANGE HERE
+        if Minimum_Energy == -Ediff_B:
+            lattice[pb[0], pb[1]] = 2
+            #print("before",pos2, pb)
+            # pos0 = np.delete(pos0, colb, axis=1)
+            #print('before', pos0, colb)
+            pos0[:,colb:-1] = pos0[:,colb+1:]
+            #print('after', pos0)
+            first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
+            pos2[:,first_negative_column] = pb
+            #print(pos2)
+            E_total = E_total + Minimum_Energy
+            #print("Ediff:", Ediff)
+        elif Minimum_Energy == -Ediff_H:
+            lattice[p0[0], p0[1]] = 0
+            #print("before",pos2, pb)
+            # pos0 = np.delete(pos0, colb, axis=1)
+            #print('before', pos0, colb)
+            pos2[:,col0:-1] = pos2[:,col0+1:]
+            #print('after', pos0)
+            first_negative_column = np.where(np.any(pos0 < 0, axis=0))[0][0]
+            pos0[:,first_negative_column] = p0
+            #print(pos2)
+            E_total = E_total + Minimum_Energy
+            #print("Ediff:", Ediff)
+        else:
+            print("Ups! Something went wrong!")
+        
+    else:
+        lattice[pb[0], pb[1]] = 0
+        lattice[p0[0], p0[1]] = 2
+    #print(E_total, Ediff)
+    return lattice, pos2, pos0, E_total
+
+
+#%%
+
 
 # check if object moves. pos1 is the coordinates of all objects where one is to be moved. 
 # most likely a Tcell
@@ -408,14 +485,16 @@ def gridprint(lattice):
     #plt.grid(True, linewidth=0.5, color='black')
     plt.show()
 
-
+def remove_bacteria(lattice, eps, muT, muB):
+    return 0
+###MAKE REMOVE BACTERIA FUNCTION!!!
 #%%
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
  
     E_history = {}
     Tcell = np.zeros(len(Temp))
     B_num = np.zeros(len(Temp))
-    pos2t= []
+    #pos2t= []
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
@@ -430,18 +509,19 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
             else:
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
-                lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
-                                                lattice, pos2, pos0, t, E_lattice, eps, muB)  
+                #lattice, pos2, pos0, E_lattice = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB) 
+                lattice, pos2, pos0, E_lattice = evaluate_particle_changeB(lattice, pos2, pos0, t, E_lattice, eps, muB)  
            
-        pos2t.append(pos2.shape[1])
+        #pos2t.append(pos2.shape[1])
         #gridprint(lattice)
             #pos0t.append(pos0)
             #pos1t.append(pos1)
         
+        #the number of columns without -1 are the number of particles
         Tcell[ind] = np.sum((pos1 != -1).all(axis=0))
         B_num[ind] = np.sum((pos2 != -1).all(axis=0))
         #Tcell.append(pos1.shape[1])   
-
+        print(B_num)
         E_history[t] = E_history_for_Temp.copy()
         
         #pos0_hist.append(pos0t)
@@ -453,7 +533,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
     run_name = f'{datetime_str}'
     
-    return lattice, E_history, B_num, pos2t, run_name #, pos0_hist, pos1_hist, pos2_hist
+    return lattice, E_history, B_num, run_name #, pos0_hist, pos1_hist, pos2_hist
 
 """
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
@@ -539,7 +619,7 @@ interaction_matrix = np.array([
     [0, BT_int, BB_int]
 ])
 
-lattice, E_history, B_num, pos2t, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
+lattice, E_history, B_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
 #%%
 
