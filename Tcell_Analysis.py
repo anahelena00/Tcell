@@ -1,21 +1,12 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[64]:
-
+#%%
 
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-from datetime import datetime
 
-file_name = '20231120-23-20_1e4_lala.npz'
+#%% 
 
-current_dir = os.getcwd()
-new_dir = f'{current_dir}/'
-file_dir = f'{new_dir}{file_name}'
-
-npzfile = np.load(file_dir)
+file_name = '20231227-18-04_test1000.npz'
+npzfile = np.load(file_name)
 
 keys = npzfile.files
 for key in keys:
@@ -27,8 +18,7 @@ E_var = E_variance
 T_num = Tcell_num
 
 
-# In[67]:
-
+#%%
 
 def stirling(x):
     res = x*np.log(x)-x
@@ -110,14 +100,4 @@ plt.legend()
 plt.show()
 
 
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
+# %%
