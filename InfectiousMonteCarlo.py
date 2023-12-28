@@ -413,8 +413,6 @@ def gridprint(lattice):
 #%%
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
     
-    
-
     E_history = {}
     T_num = np.zeros(len(Temp), dtype=int)
     B_num = np.zeros(len(Temp), dtype=int)
@@ -621,7 +619,7 @@ np.savez(file_name,
          eps = interaction_matrix,
          muT = muT,
          muB = muB,
-         Tcell_num = T_num_in,
+         T_num = T_num,
          B_num = B_num,
          size = size,
          E_mean = E_mean,
