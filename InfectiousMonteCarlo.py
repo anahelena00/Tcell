@@ -416,8 +416,8 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     
 
     E_history = {}
-    Tcell = np.zeros(len(Temp))
-    B_num = np.zeros(len(Temp))
+    T_num = np.zeros(len(Temp), dtype=int)
+    B_num = np.zeros(len(Temp), dtype=int)
     pos2t= []
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
@@ -442,7 +442,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
             #pos0t.append(pos0)
             #pos1t.append(pos1)
         
-        Tcell[ind] = np.sum((pos1 != -1).all(axis=0))
+        T_num[ind] = np.sum((pos1 != -1).all(axis=0))
         B_num[ind] = np.sum((pos2 != -1).all(axis=0))
         #Tcell.append(pos1.shape[1])   
 
@@ -457,7 +457,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
     run_name = f'{datetime_str}'
     
-    return lattice, E_history, B_num, pos2t, run_name #, pos0_hist, pos1_hist, pos2_hist
+    return lattice, E_history, B_num, T_num, run_name #, pos0_hist, pos1_hist, pos2_hist
 
 """
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
@@ -524,14 +524,14 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 100
+num_runs = 1000
 #Temp = 0.2
 T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
 size = 10
 
 T_num_in = int(size**2/2)    # number of initial T-cells
-B_num_in = 1
+B_num_in = int(1)
 muT, muB = -1, -1
 
 BB_int = 1      # interaction energy between bacterias
@@ -544,7 +544,7 @@ interaction_matrix = np.array([
 ])
 
 #%%
-lattice, E_history, B_num, pos2t, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
+lattice, E_history, B_num, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
 #%%
 
@@ -613,7 +613,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e4_test'
+file_spec = '1e4_Thu'
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
@@ -629,3 +629,5 @@ np.savez(file_name,
          num_runs = num_runs,        
         )
 
+
+# %%
