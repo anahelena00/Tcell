@@ -305,6 +305,41 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
 
 #%%
 
+def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB):
+
+    pB, colB = position_random(posB)
+    ID_B = lattice[pB[0], pB[1]]
+    assert ID_B == 2, f"ID_B not 2 but {ID_B}"
+    Ein = energy(lattice, ID_B, pB, eps)
+    Efin = energy(lattice, 0, pB, eps) - muB  # energy if particle is removed 
+    Ediff = Efin - Ein
+
+    if Ediff < 0:
+        remove = True
+    else: 
+        probability = np.exp(-Ediff/T)
+    if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
+        remove = True 
+    else:
+        remove = False
+    if remove:
+        # remove B from posB        
+        posB = posB.copy()
+        posB[:,colB:-1] = posB[:,colB+1:]
+
+        # add 0 on old Bs coordinates
+        first_negative_column = np.where(np.any(pos0 < 0, axis=0))[0][0]
+        pos0 = pos0.copy()
+        pos0[:,first_negative_column] = pB
+        lattice[pB[0], pB[1]] = 0
+        E_total = E_total + Ediff
+    else:
+        pass
+
+    return lattice, posB, pos0, E_total
+
+#%%
+
 
 # check if object moves. pos1 is the coordinates of all objects where one is to be moved. 
 # most likely a Tcell
@@ -426,15 +461,27 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
 
-            if np.all(pos0 < 0):
+            if np.all(pos0 < 0): # if no 
                 #print(pos0)
+                
                 print("Lattice is full at iteration:", i)
             else:
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
-                lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
-                                                lattice, pos2, pos0, t, E_lattice, eps, muB)  
-           
+                
+                if np.all(pos2 < 0): # if no B's
+                    selected_function = evaluate_particle_addB
+                #elif np.all(pos2 > 0): # if 
+                 #   selected_function = evaluate_particle_removeB
+                else:     
+                    selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
+                    lattice, pos2, pos0, E_lattice = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB)
+                
+                #lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
+                 #                               lattice, pos2, pos0, t, E_lattice, eps, muB)  
+                #lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(
+                 #   lattice, pos2, pos0, t, E_lattice, eps, muB)
+                
         pos2t.append(pos2.shape[1])
         #gridprint(lattice)
             #pos0t.append(pos0)
@@ -526,10 +573,10 @@ num_runs = 1000
 #Temp = 0.2
 T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 10
+size = 5
 
 T_num_in = int(size**2/2)    # number of initial T-cells
-B_num_in = int(1)
+B_num_in = int(2)
 muT, muB = -1, -1
 
 BB_int = 1      # interaction energy between bacterias
