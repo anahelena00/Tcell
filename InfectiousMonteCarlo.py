@@ -209,7 +209,7 @@ def lattice_energy(lattice, eps, muT, muB):
 
 #%%
 
-def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB):
+def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
     
     pb, colb = position_random(pos0) #pick a hole to put bacteria
     
@@ -249,12 +249,13 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB):
         pos2[:,first_negative_column] = pb
         #print(pos2)
         E_total = E_total + Ediff
+        B_num = B_num + 1
         #print("Ediff:", Ediff)
         
     else:
         lattice[pb[0], pb[1]] = 0
     #print(E_total, Ediff)
-    return lattice, pos2, pos0, E_total
+    return lattice, pos2, pos0, E_total, B_num
 
 """
 def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB):
@@ -305,7 +306,7 @@ def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB)
 
 #%%
 
-def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB):
+def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
 
     pB, colB = position_random(posB)
     ID_B = lattice[pB[0], pB[1]]
@@ -333,10 +334,11 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB):
         pos0[:,first_negative_column] = pB
         lattice[pB[0], pB[1]] = 0
         E_total = E_total + Ediff
+        B_num = B_num -1
     else:
         pass
 
-    return lattice, posB, pos0, E_total
+    return lattice, posB, pos0, E_total, B_num
 
 #%%
 
@@ -449,39 +451,40 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     
     E_history = {}
     T_num = np.zeros(len(Temp), dtype=int)
-    B_num = np.zeros(len(Temp), dtype=int)
-    #pos2t= []
+    B_num_history = []
+    B_num = B_num_in
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
         E_lattice = lattice_energy(lattice, eps, muT, muB)
-        
+        B_num_for_Temp = np.zeros(num_runs, dtype = int)
         #gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
-
+            
             if np.all(pos0 < 0): # if no holes -> only attempt remove B 
-                lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(
-                    lattice, pos2, pos0, t, E_lattice, eps, muB)
+                lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_removeB(
+                    lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #print("Lattice is full at iteration:", i)
             elif np.all(pos2 < 0): # if no B's -> only attempt move T and add B 
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
-                lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
-                                                lattice, pos2, pos0, t, E_lattice, eps, muB)                  
+                lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
+                                                lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)                  
             else: # attempt all 
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
-                lattice, pos2, pos0, E_lattice = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB)
-             
+                lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+            B_num_for_Temp[i] = B_num
+        B_num_history.append(B_num_for_Temp) 
       #  pos2t.append(pos2.shape[1])
         #gridprint(lattice)
             #pos0t.append(pos0)
             #pos1t.append(pos1)
         
-        T_num[ind] = np.sum((pos1 != -1).all(axis=0))
-        B_num[ind] = np.sum((pos2 != -1).all(axis=0))
+        #T_num[ind] = np.sum((pos1 != -1).all(axis=0))
+        #B_num[ind] = np.sum((pos2 != -1).all(axis=0))
         #Tcell.append(pos1.shape[1])   
 
         E_history[t] = E_history_for_Temp.copy()
@@ -491,7 +494,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
     run_name = f'{datetime_str}'
     
-    return lattice, E_history, B_num, T_num, run_name #, pos0_hist, pos1_hist, pos2_hist
+    return lattice, E_history, B_num_history, T_num, run_name #, pos0_hist, pos1_hist, pos2_hist
 
 """
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
@@ -558,14 +561,14 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10000
+num_runs = 1000
 #Temp = 0.2
 T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 30
+size = 20
 
 T_num_in = int(size**2/2)    # number of initial T-cells
-B_num_in = int(2)
+B_num_in = int(1)
 muT, muB = -1, -1
 
 BB_int = 1      # interaction energy between bacterias
@@ -578,16 +581,17 @@ interaction_matrix = np.array([
 ])
 
 #%%
-lattice, E_history, B_num, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
+lattice, E_history, B_num_history, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
 #%%
 
-
+aa=15
 plt.figure()
-plt.plot(T,B_num,'.')
-plt.xlabel('T')
+plt.plot(B_num_history[aa],'.')
+plt.xlabel('Iterations')
 plt.ylabel('Number of B')
-plt.ylim(1240,1260)
+plt.title(f'Temperature: {T[aa]}')
+#plt.ylim(1240,1260)
 plt.show()
 
 
@@ -605,7 +609,6 @@ def mean_energy(T, E_history, ind_equilibrium):
 
     return E_mean, E_variance
 
-#ind_equi = int(0.5*num_runs) 
 ind_equi = int((0.4)*num_runs) # index where equilibrium is assumed. 
 E_mean, E_var = mean_energy(T, E_history, ind_equi)
 
@@ -647,7 +650,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e5_detailedBalance'
+file_spec = '1e5_size50'
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
@@ -655,8 +658,10 @@ np.savez(file_name,
          eps = interaction_matrix,
          muT = muT,
          muB = muB,
+         T_num_in = T_num_in,
          T_num = T_num,
-         B_num = B_num,
+         B_num_in = B_num_in,
+         B_num_history = B_num_history,
          size = size,
          E_mean = E_mean,
          E_variance = E_var,
