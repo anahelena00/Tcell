@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 #%% 
 
-file_name = '20231228-13-50_1e4_Thu.npz'
+file_name = '20231228-22-36_1e5_detailedBalance.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
@@ -21,6 +21,7 @@ E_var = E_variance
 
 #%%
 
+"""
 def stirling(x):
     res = x*np.log(x)-x
     return res
@@ -29,6 +30,7 @@ def multiplicity2(size, B_num):
     N = size**2
     multiplicity = stirling(N)-stirling(B_num)-stirling(N-B_num)
     return multiplicity
+"""
 
 def multiplicity(size, B_num, T_num):
     N = size**2
@@ -44,16 +46,13 @@ def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
      
     S_ref = np.log(M)   
     G_T = muT*T_num
-    G_B = muB*B_num[-1]
+   # G_B = muB*B_num[-1]
+    G_B = muB*B_num
     
-    Cv_variance = np.zeros([len(T)])
-    G = np.zeros([len(T)])
-    for i in range(len(T)):
-        x = (B_num[i]+T_num)/size**2
-        #print(x)
-        Cv_variance[i] = E_var[i]/T[i]**2
-       # G[i] = (1-x)*G_T + x*G_B - T[i]*(x*np.log(x)+(1-x)*np.log(1-x))
-        #print(T[i])
+    x = (B_num+T_num)/size**2    
+    G = (1-x)*G_T + x*G_B - T*(x*np.log(x)+(1-x)*np.log(1-x))
+    
+    Cv_variance = E_var/T**2
     Cv_gradient = np.gradient(E_mean,T)        
     Sgrad = S_ref - np.cumsum(Cv_gradient)
     Svar = S_ref - np.cumsum(Cv_variance)
