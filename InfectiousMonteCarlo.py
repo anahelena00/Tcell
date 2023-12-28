@@ -340,7 +340,6 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB):
 
 #%%
 
-
 # check if object moves. pos1 is the coordinates of all objects where one is to be moved. 
 # most likely a Tcell
 # pos0 are coordinates of holes in the lattice 
@@ -451,7 +450,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     E_history = {}
     T_num = np.zeros(len(Temp), dtype=int)
     B_num = np.zeros(len(Temp), dtype=int)
-    pos2t= []
+    #pos2t= []
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
@@ -461,28 +460,22 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
 
-            if np.all(pos0 < 0): # if no 
-                #print(pos0)
-                
-                print("Lattice is full at iteration:", i)
-            else:
+            if np.all(pos0 < 0): # if no holes -> only attempt remove B 
+                lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(
+                    lattice, pos2, pos0, t, E_lattice, eps, muB)
+                #print("Lattice is full at iteration:", i)
+            elif np.all(pos2 < 0): # if no B's -> only attempt move T and add B 
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
-                
-                if np.all(pos2 < 0): # if no B's
-                    selected_function = evaluate_particle_addB
-                #elif np.all(pos2 > 0): # if 
-                 #   selected_function = evaluate_particle_removeB
-                else:     
-                    selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
-                    lattice, pos2, pos0, E_lattice = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB)
-                
-                #lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
-                 #                               lattice, pos2, pos0, t, E_lattice, eps, muB)  
-                #lattice, pos2, pos0, E_lattice = evaluate_particle_removeB(
-                 #   lattice, pos2, pos0, t, E_lattice, eps, muB)
-                
-        pos2t.append(pos2.shape[1])
+                lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
+                                                lattice, pos2, pos0, t, E_lattice, eps, muB)                  
+            else: # attempt all 
+                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
+                                                lattice, pos1, pos0, t, E_lattice, eps)
+                selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
+                lattice, pos2, pos0, E_lattice = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB)
+             
+      #  pos2t.append(pos2.shape[1])
         #gridprint(lattice)
             #pos0t.append(pos0)
             #pos1t.append(pos1)
@@ -492,11 +485,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         #Tcell.append(pos1.shape[1])   
 
         E_history[t] = E_history_for_Temp.copy()
-        
-        #pos0_hist.append(pos0t)
-        #pos1_hist.append(pos1t)
-        #pos2_hist.append(pos2t)
-        
+  
     # Unique name for data file 
     current_datetime = datetime.now()
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
@@ -569,11 +558,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 1000
+num_runs = 10000
 #Temp = 0.2
 T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 5
+size = 30
 
 T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = int(2)
@@ -581,7 +570,7 @@ muT, muB = -1, -1
 
 BB_int = 1      # interaction energy between bacterias
 TT_int = -1      # interaction energy between T-cells
-BT_int = 4     # interaction energy between bacteria and T-cells
+BT_int = 2     # interaction energy between bacteria and T-cells
 interaction_matrix = np.array([
     [0, 0, 0],
     [0, TT_int, BT_int],
@@ -617,7 +606,7 @@ def mean_energy(T, E_history, ind_equilibrium):
     return E_mean, E_variance
 
 #ind_equi = int(0.5*num_runs) 
-ind_equi = int((3/8)*num_runs) # index where equilibrium is assumed. 
+ind_equi = int((0.4)*num_runs) # index where equilibrium is assumed. 
 E_mean, E_var = mean_energy(T, E_history, ind_equi)
 
 #%%
@@ -629,7 +618,7 @@ def E_history_plot(E_history, T, num_runs):
     E_keys = list(E_history.keys())
     # Create subplots
     fig, axes = plt.subplots(len(T), 1, figsize=(8, 2*len(T)))
-    fig.suptitle(f'hi there')
+    #fig.suptitle(f'hi there')
     for i in range(len(T)):
         ax = axes[i]
         
@@ -643,7 +632,7 @@ def E_history_plot(E_history, T, num_runs):
     plt.show()
 
 
-#E_history_plot(E_history, T, num_runs)
+E_history_plot(E_history, T, num_runs)
 #%%
 
 plt.figure()
@@ -658,7 +647,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e4_Thu'
+file_spec = '1e5_detailedBalance'
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
@@ -673,6 +662,6 @@ np.savez(file_name,
          E_variance = E_var,
          num_runs = num_runs,        
         )
-
+print(file_name)
 
 # %%
