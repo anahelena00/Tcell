@@ -1,21 +1,22 @@
 #%%
 
 import numpy as np
+import math as math
 import matplotlib.pyplot as plt
 
 #%% 
 
-file_name = '20231227-18-04_test1000.npz'
+file_name = '20231228-13-50_1e4_Thu.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
 for key in keys:
     locals()[key] = npzfile[key]
-# print('keys:',keys)    
-# keys: ['T', 'eps', 'muT', 'muB', 'Tcell_num', 'B_num', 'size', 'E_mean', 'E_variance', 'num_runs']
+print('keys:',keys)    
+# keys: ['T', 'eps', 'muT', 'muB', 'T_num', 'B_num', 'size', 'E_mean', 'E_variance', 'num_runs']
 
 E_var = E_variance
-T_num = Tcell_num
+#T_num = Tcell_num
 
 
 #%%
@@ -24,10 +25,20 @@ def stirling(x):
     res = x*np.log(x)-x
     return res
 
-def multiplicity(size, B_num):
+def multiplicity2(size, B_num):
     N = size**2
     multiplicity = stirling(N)-stirling(B_num)-stirling(N-B_num)
     return multiplicity
+
+def multiplicity(size, B_num, T_num):
+    N = size**2
+    N_0 = N - B_num - T_num
+    Omega = np.zeros(len(B_num))
+    for i in range(len(Omega)):
+        Omega[i] = math.factorial(N)/(math.factorial(N_0[i]) 
+            * math.factorial(B_num[i]) * math.factorial(T_num[i]))
+    return Omega
+    
 
 def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
      
@@ -41,7 +52,7 @@ def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
         x = (B_num[i]+T_num)/size**2
         #print(x)
         Cv_variance[i] = E_var[i]/T[i]**2
-        G[i] = (1-x)*G_T + x*G_B - T[i]*(x*np.log(x)+(1-x)*np.log(1-x))
+       # G[i] = (1-x)*G_T + x*G_B - T[i]*(x*np.log(x)+(1-x)*np.log(1-x))
         #print(T[i])
     Cv_gradient = np.gradient(E_mean,T)        
     Sgrad = S_ref - np.cumsum(Cv_gradient)
@@ -50,9 +61,11 @@ def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
      
     return Cv_gradient, Cv_variance, Sgrad, Svar, F, G
 
-M = multiplicity(size, B_num)
+#%% 
+M = multiplicity(size, B_num, T_num)
 Cv_grad, Cv_var, Sgrad, Svar, F, G =the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT,size) 
 
+#%%
 # FIGURES 
 
 # Mean Energy
