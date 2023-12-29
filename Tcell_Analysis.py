@@ -6,21 +6,31 @@ import matplotlib.pyplot as plt
 
 #%% 
 
-file_name = '20231229-11-12_1e4_test.npz'
+file_name = '20231229-15-34_1e5_testTilAnayse.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
 data_dict = {key: npzfile[key] for key in keys}
 locals().update(data_dict)
 #print('keys:',keys)    
-# keys: ['T', 'eps', 'muT', 'muB', 'T_num_in', 'T_num', 'B_num_in', 'B_num_history', 'size', 'E_mean', 'E_var', 'num_runs']
-E_var = E_variance
-
+T = data_dict['T'] 
+eps = data_dict['eps'] 
+muT = data_dict['muT']
+muB = data_dict['muB']
+T_num_in = data_dict['T_num_in']
+T_num = data_dict['T_num']
+B_num_in = data_dict['B_num_in']
+B_num_history = data_dict['B_num_history']
+size = data_dict['size']
+E_mean = data_dict['E_mean']
+E_var = data_dict['E_var']
+num_runs = data_dict['num_runs']
 
 
 #%%
 
-def stirling(x):
+def factorial(x):
+
     res = x*np.log(x)-x
     return res
 """
@@ -38,10 +48,11 @@ def multiplicity(size, B_num, T_num):
         if N_0[i] == 0:
             Omega[i] = math.factorial(N)/(math.factorial(B_num[i])*math.factorial(T_num[i]))
         else:         
-            Omega[i] = math.factorial(N)/(math.factorial(N_0[i]) 
-                * math.factorial(B_num[i]) * math.factorial(T_num[i]))
-            #Omega[i] = stirling(N)/(stirling(N_0[i]) 
-            #   * stirling(B_num[i]) * stirling(T_num[i]))
+            #Omega[i] = math.factorial(N)/(math.factorial(N_0[i]) 
+             #   * math.factorial(B_num[i]) * math.factorial(T_num[i]))
+            Omega[i] = factorial(N)/(factorial(N_0[i]) 
+               * factorial(B_num[i]) * factorial(T_num[i]))
+            print(Omega[i])
     return Omega
     
 
@@ -56,7 +67,7 @@ def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
     G = (1-x)*G_T + x*G_B - T*(x*np.log(x)+(1-x)*np.log(1-x))
     
     Cv_variance = E_var/T**2
-    Cv_gradient = np.gradient(E_mean,T)        
+    Cv_gradient = np.gradient(E_mean, T)        
     Sgrad = S_ref - np.cumsum(Cv_gradient)
     Svar = S_ref - np.cumsum(Cv_variance)
     F = E_mean - T*Sgrad
@@ -71,7 +82,7 @@ for i in range(len(T)):
 M = multiplicity(size, B_num, T_num)
 
 #%%  
-Cv_grad, Cv_var, Sgrad, Svar, F, G =the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT,size) 
+Cv_grad, Cv_var, Sgrad, Svar, F, G = the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size) 
 
 #%%
 # FIGURES 
