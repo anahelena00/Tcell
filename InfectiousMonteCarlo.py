@@ -465,14 +465,14 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                                                 lattice, pos1, pos0, t, E_lattice, eps)
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
                                                 lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
-                assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
+                #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
             else: # attempt all 
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
                 lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
-                assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
+                #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
             B_num_for_Temp[i] = B_num
         B_num_history.append(B_num_for_Temp) 
       #  pos2t.append(pos2.shape[1])
@@ -558,11 +558,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10000
+num_runs = 100_000
 #Temp = 0.2
 T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 30
+size = 50
 
 T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = int(1)
@@ -647,7 +647,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e4_test'
+file_spec = '1e5_testTilAnayse'
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
@@ -661,7 +661,7 @@ np.savez(file_name,
          B_num_history = B_num_history,
          size = size,
          E_mean = E_mean,
-         E_variance = E_var,
+         E_var = E_var,
          num_runs = num_runs,        
         )
 print(file_name)

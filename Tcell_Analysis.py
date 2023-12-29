@@ -10,12 +10,12 @@ file_name = '20231229-11-12_1e4_test.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
-for key in keys:
-    locals()[key] = npzfile[key]
+data_dict = {key: npzfile[key] for key in keys}
+locals().update(data_dict)
 #print('keys:',keys)    
-# keys: ['T', 'eps', 'muT', 'muB', 'T_num_in', 'T_num', 'B_num_in', 'B_num_history', 'size', 'E_mean', 'E_variance', 'num_runs']
+# keys: ['T', 'eps', 'muT', 'muB', 'T_num_in', 'T_num', 'B_num_in', 'B_num_history', 'size', 'E_mean', 'E_var', 'num_runs']
 E_var = E_variance
-#T_num = Tcell_num
+
 
 
 #%%
@@ -78,7 +78,7 @@ Cv_grad, Cv_var, Sgrad, Svar, F, G =the_physics(T, E_mean, E_var, M, B_num, muB,
 
 # Mean Energy
 plt.figure()
-plt.plot(T,E_mean,'o')
+plt.plot(T, E_mean,'o')
 plt.xlabel('Temperature')
 plt.ylabel('Mean Energy')
 #plt.title(f'Mean Energy, T_num: {Tcell_num}, B_num: {Bacteria_num}')
