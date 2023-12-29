@@ -558,7 +558,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 100_000
+num_runs = 20_000
 #Temp = 0.2
 T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
@@ -566,7 +566,7 @@ size = 50
 
 T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = int(1)
-muT, muB = -1, -1
+muT, muB = -1, -4
 
 BB_int = 1      # interaction energy between bacterias
 TT_int = -1      # interaction energy between T-cells
@@ -581,15 +581,20 @@ interaction_matrix = np.array([
 lattice, E_history, B_num_history, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
 #%%
-
-aa=-1
-plt.figure()
-plt.plot(B_num_history[aa],'.')
-plt.xlabel('Iterations')
-plt.ylabel('Number of B')
-plt.title(f'Temperature: {T[aa]}')
-#plt.ylim(1240,1260)
-plt.show()
+def B_num_plot(B_num_history, T):
+    num_cols = 2
+    num_rows = len(T) // num_cols
+    _, axes = plt.subplots(num_rows, num_cols, figsize=(8, 2*len(T)))
+    axes = axes.flatten()
+    for i in range(len(T)):
+        ax = axes[i]
+        T_formatted = f'{T[i]:.2f}'
+       # B_num = B_num_history[i]
+        ax.plot(np.arange(0, num_runs), B_num_history[i], '.', markersize = '0.1')
+        ax.set_ylabel(f'N_B, T = {T_formatted}')
+    plt.tight_layout()
+    plt.show()
+B_num_plot(B_num_history, T)
 
 
 #%%
@@ -617,13 +622,13 @@ def E_history_plot(E_history, T, num_runs):
 
     E_keys = list(E_history.keys())
     # Create subplots
-    fig, axes = plt.subplots(len(T), 1, figsize=(8, 2*len(T)))
+    _, axes = plt.subplots(len(T), 1, figsize=(8, 2*len(T)))
     #fig.suptitle(f'hi there')
     for i in range(len(T)):
         ax = axes[i]
         
         T_formatted = f'{T[i]:.2f}'
-        ax.plot(np.arange(0, num_runs), E_history[E_keys[i]], '.', markersize = '1')
+        ax.plot(np.arange(0, num_runs), E_history[E_keys[i]], '.', markersize = '0.1')
         ax.set_yticks(np.arange(yMin, yMax, step = 20))
         ax.set_ylabel(f'Energy (T = {T_formatted})')
         #ax.set_xlabel('Iteration')
