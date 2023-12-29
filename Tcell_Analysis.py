@@ -29,8 +29,7 @@ num_runs = data_dict['num_runs']
 
 #%%
 
-def factorial(x):
-
+def stirling(x):
     res = x*np.log(x)-x
     return res
 """
@@ -39,6 +38,7 @@ def multiplicity2(size, B_num):
     multiplicity = stirling(N)-stirling(B_num)-stirling(N-B_num)
     return multiplicity
 """
+
 
 def multiplicity(size, B_num, T_num):
     N = size**2
@@ -50,15 +50,30 @@ def multiplicity(size, B_num, T_num):
         else:         
             #Omega[i] = math.factorial(N)/(math.factorial(N_0[i]) 
              #   * math.factorial(B_num[i]) * math.factorial(T_num[i]))
-            Omega[i] = factorial(N)/(factorial(N_0[i]) 
-               * factorial(B_num[i]) * factorial(T_num[i]))
+            Omega[i] = stirling(N)/(stirling(N_0[i]) 
+               * stirling(B_num[i]) * stirling(T_num[i]))
             print(Omega[i])
     return Omega
-    
 
-def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
+def ln_multiplicity(x):
+    if x > 20:
+        res = x*np.log(x)-x     # stirlings approximation
+    else:
+        res = np.log(math.factorial(x))
+    return res
+
+def S_reference(size, B_num, T_num):
+    N = size**2
+    N_0 = N - B_num - T_num # N_0=0 if full then omit from Omega
+    S_ref = np.zeros(len(B_num), dtype = int)
+    for i in range(len(S_ref)):
+        S_ref[i] = ln_multiplicity(N) - ln_multiplicity(T_num[i]) - ln_multiplicity(B_num[i]) - ln_multiplicity(N_0[i])
+    return S_ref
+
+def the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size):
      
-    S_ref = np.log(M)   
+    S_ref = S_reference(size, B_num, T_num)   
+    print(S_ref)
     G_T = muT*T_num
    # G_B = muB*B_num[-1]
     G_B = muB*B_num
@@ -79,10 +94,10 @@ ind_equi = int((0.4)*num_runs)
 B_num = np.zeros(len(T), dtype = int)
 for i in range(len(T)):
     B_num[i] = int(np.mean(B_num_history[i][ind_equi:]))
-M = multiplicity(size, B_num, T_num)
+#M = multiplicity(size, B_num, T_num)
 
 #%%  
-Cv_grad, Cv_var, Sgrad, Svar, F, G = the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size) 
+Cv_grad, Cv_var, Sgrad, Svar, F, G = the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size) 
 
 #%%
 # FIGURES 
