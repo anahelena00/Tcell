@@ -191,12 +191,10 @@ def lattice_energy(lattice, eps, muT, muB):
     # interaction energy
     E_interaction = 0
     rows, cols = lattice.shape
-
     for i in range(rows):
         for j in range(cols):
             val = int(lattice[i, j])
             E_interaction += energy(lattice, val, (i, j), eps)
-
     E_interaction = E_interaction / 2
     
     # chemical energy
@@ -211,15 +209,15 @@ def lattice_energy(lattice, eps, muT, muB):
 
 def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
     
-    pb, colb = position_random(pos0) #pick a hole to put bacteria
+    p0, colb = position_random(pos0) #pick a hole to put bacteria
     
-    assert lattice[pb[0],pb[1]] == 0
+  #  assert lattice[p0[0],p0[1]] == 0
     #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
     ID_B = 2
-    Efin = energy(lattice, ID_B, pb, eps) + muB # energy from interaction and chemical if placed
+    Efin = energy(lattice, ID_B, p0, eps) + muB # energy from interaction and chemical if placed
     #ID_in = lattice[pb[0], pb[1]]
     ID_empty = 0
-    Ein = energy(lattice,ID_empty, pb, eps) #evaluate neighbouring energy before
+    Ein = energy(lattice,ID_empty, p0, eps) #evaluate neighbouring energy before
     
     #print("Efin , Ein", Efin, Ein)
     Ediff = Efin - Ein 
@@ -237,7 +235,7 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
             add = False
         
     if add: 
-        lattice[pb[0], pb[1]] = 2
+        lattice[p0[0], p0[1]] = 2
         #print("before",pos2, pb)
         #pos0 = np.delete(pos0, colb, axis=1)
         #print('before', pos0, colb)
@@ -246,14 +244,14 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
         #print('after', pos0)
         first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
         pos2 = pos2.copy()
-        pos2[:,first_negative_column] = pb
+        pos2[:,first_negative_column] = p0
         #print(pos2)
         E_total = E_total + Ediff
         B_num = B_num + 1
         #print("Ediff:", Ediff)
         
     else:
-        lattice[pb[0], pb[1]] = 0
+        lattice[p0[0], p0[1]] = 0
     #print(E_total, Ediff)
     return lattice, pos2, pos0, E_total, B_num
 
@@ -310,7 +308,7 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
 
     pB, colB = position_random(posB)
     ID_B = lattice[pB[0], pB[1]]
-    assert ID_B == 2, f"ID_B not 2 but {ID_B}"
+   # assert ID_B == 2, f"ID_B not 2 but {ID_B}"
     Ein = energy(lattice, ID_B, pB, eps)
     Efin = energy(lattice, 0, pB, eps) - muB  # energy if particle is removed 
     Ediff = Efin - Ein
@@ -342,20 +340,16 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
 
 #%%
 
-# check if object moves. pos1 is the coordinates of all objects where one is to be moved. 
-# most likely a Tcell
-# pos0 are coordinates of holes in the lattice 
-
 def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
    
     p1, col1 = position_random(pos1)
     
     ID_in = lattice[p1[0], p1[1]]
-    assert ID_in == 1, f"ID_in not 1 but {ID_in}"
+    #assert ID_in == 1, f"ID_in not 1 but {ID_in}"
     Ein = energy(lattice,ID_in, p1, eps)
     
     p0, col0 = position_random(pos0)
-    assert lattice[p0[0],p0[1]] == 0 , f"Found position is not empty"
+    #assert lattice[p0[0],p0[1]] == 0 , f"Found position is not empty"
     # seeing what energy would be for particle if it moved the the chosen empty location
     lattice[p1[0], p1[1]] = 0 # temporarily moving object so not to be seen as neighbor by itself
     Efin = energy(lattice, ID_in, p0, eps)
@@ -380,8 +374,8 @@ def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
         # update arrays containing coordinates of 0's and 1's
         pos0 = pos0.copy()
         pos0[:,col0] = [p1[0], p1[1]]
-        assert lattice[pos1[0][col1],pos1[1][col1]] == 1, f"not 1 but: {lattice[pos1[0][col1],pos1[1][col1]]}"
-        assert lattice[pos0[0][col0],pos0[1][col0]] == 0, f"not 0 but: {lattice[pos0[0][col0],pos0[1][col0]]}"
+        #assert lattice[pos1[0][col1],pos1[1][col1]] == 1, f"not 1 but: {lattice[pos1[0][col1],pos1[1][col1]]}"
+        #assert lattice[pos0[0][col0],pos0[1][col0]] == 0, f"not 0 but: {lattice[pos0[0][col0],pos0[1][col0]]}"
         E_total = E_total + Ediff
         #print("Ediff:", Ediff)
         
@@ -452,12 +446,12 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     E_history = {}
     T_num = np.zeros(len(Temp), dtype=int)
     B_num_history = []
-    B_num = B_num_in
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
         E_lattice = lattice_energy(lattice, eps, muT, muB)
         B_num_for_Temp = np.zeros(num_runs, dtype = int)
+        B_num = B_num_in
         #gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
@@ -470,12 +464,15 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
-                                                lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)                  
+                                                lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
             else: # attempt all 
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                                 lattice, pos1, pos0, t, E_lattice, eps)
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
                 lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                #lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
             B_num_for_Temp[i] = B_num
         B_num_history.append(B_num_for_Temp) 
       #  pos2t.append(pos2.shape[1])
@@ -483,7 +480,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
             #pos0t.append(pos0)
             #pos1t.append(pos1)
         
-        #T_num[ind] = np.sum((pos1 != -1).all(axis=0))
+        T_num[ind] = np.sum((pos1 != -1).all(axis=0))
         #B_num[ind] = np.sum((pos2 != -1).all(axis=0))
         #Tcell.append(pos1.shape[1])   
 
@@ -561,11 +558,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 1000
+num_runs = 10000
 #Temp = 0.2
 T = np.arange(20,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 20
+size = 30
 
 T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = int(1)
@@ -585,7 +582,7 @@ lattice, E_history, B_num_history, T_num, run_name = monte_carlo(T, interaction_
 
 #%%
 
-aa=15
+aa=-1
 plt.figure()
 plt.plot(B_num_history[aa],'.')
 plt.xlabel('Iterations')
@@ -604,8 +601,8 @@ def mean_energy(T, E_history, ind_equilibrium):
     E_variance = np.zeros([len(T)])
 
     for ind,t in enumerate(T):
-        E_mean[ind] = np.mean(E[t][ind_equilibrium:-1])
-        E_variance[ind] = np.var(E[t][ind_equilibrium:-1])
+        E_mean[ind] = np.mean(E[t][ind_equilibrium:])
+        E_variance[ind] = np.var(E[t][ind_equilibrium:])
 
     return E_mean, E_variance
 
@@ -640,7 +637,7 @@ E_history_plot(E_history, T, num_runs)
 
 plt.figure()
 plt.plot(T,E_mean,'o')
-plt.xlabel('T')
+plt.xlabel('T') 
 plt.ylabel('U')
 plt.title(f'Size: {size}, Runs: {num_runs}')
 plt.show()
@@ -650,7 +647,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e5_size50'
+file_spec = '1e4_test'
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
