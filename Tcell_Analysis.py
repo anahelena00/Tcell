@@ -6,26 +6,24 @@ import matplotlib.pyplot as plt
 
 #%% 
 
-file_name = '20231228-22-36_1e5_detailedBalance.npz'
+file_name = '20231229-11-12_1e4_test.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
 for key in keys:
     locals()[key] = npzfile[key]
-print('keys:',keys)    
-# keys: ['T', 'eps', 'muT', 'muB', 'T_num', 'B_num', 'size', 'E_mean', 'E_variance', 'num_runs']
-
+#print('keys:',keys)    
+# keys: ['T', 'eps', 'muT', 'muB', 'T_num_in', 'T_num', 'B_num_in', 'B_num_history', 'size', 'E_mean', 'E_variance', 'num_runs']
 E_var = E_variance
 #T_num = Tcell_num
 
 
 #%%
 
-"""
 def stirling(x):
     res = x*np.log(x)-x
     return res
-
+"""
 def multiplicity2(size, B_num):
     N = size**2
     multiplicity = stirling(N)-stirling(B_num)-stirling(N-B_num)
@@ -34,11 +32,16 @@ def multiplicity2(size, B_num):
 
 def multiplicity(size, B_num, T_num):
     N = size**2
-    N_0 = N - B_num - T_num
-    Omega = np.zeros(len(B_num))
+    N_0 = N - B_num - T_num # N_0=0 if full then omit from Omega
+    Omega = np.zeros(len(B_num), dtype = int)
     for i in range(len(Omega)):
-        Omega[i] = math.factorial(N)/(math.factorial(N_0[i]) 
-            * math.factorial(B_num[i]) * math.factorial(T_num[i]))
+        if N_0[i] == 0:
+            Omega[i] = math.factorial(N)/(math.factorial(B_num[i])*math.factorial(T_num[i]))
+        else:         
+            Omega[i] = math.factorial(N)/(math.factorial(N_0[i]) 
+                * math.factorial(B_num[i]) * math.factorial(T_num[i]))
+            #Omega[i] = stirling(N)/(stirling(N_0[i]) 
+            #   * stirling(B_num[i]) * stirling(T_num[i]))
     return Omega
     
 
@@ -61,7 +64,13 @@ def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
     return Cv_gradient, Cv_variance, Sgrad, Svar, F, G
 
 #%% 
+ind_equi = int((0.4)*num_runs) 
+B_num = np.zeros(len(T), dtype = int)
+for i in range(len(T)):
+    B_num[i] = int(np.mean(B_num_history[i][ind_equi:]))
 M = multiplicity(size, B_num, T_num)
+
+#%%  
 Cv_grad, Cv_var, Sgrad, Svar, F, G =the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT,size) 
 
 #%%
