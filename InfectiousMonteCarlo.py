@@ -437,11 +437,9 @@ def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
 
 def gridprint(lattice):
     lattice_length = len(lattice)
-    cmap = plt.cm.colors.ListedColormap(['blue', 'white', 'red'])
-    #cmap = plt.cm.colors.ListedColormap(['white', 'blue', 'red'])
-    plt.imshow(lattice, cmap=cmap, extent=[0, lattice_length, 0, lattice_length])
-    plt.colorbar(ticks=[1, 0, 2], label="Legend")
-    #plt.colorbar(ticks=[0, 1, 2], label="Legend")
+    cmap = plt.cm.colors.ListedColormap(['white', 'blue', 'red'])
+    plt.imshow(lattice, cmap=cmap, extent=[0, lattice_length, 0, lattice_length], vmin=0, vmax=2)
+    plt.colorbar(ticks=[0, 1, 2], label="Legend")
     plt.title("Lattice with T's (Blue) and B's (Red)")
     #plt.grid(True, linewidth=0.5, color='black')
     plt.show()
@@ -469,13 +467,13 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                 #print("Lattice is full at iteration:", i)
             elif np.all(pos2 < 0): # if no B's -> only attempt move T and add B 
                 #lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                 #                               lattice, pos1, pos0, t, E_lattice, eps)
+                 #                              lattice, pos1, pos0, t, E_lattice, eps)
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
                                                 lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
             else: # attempt all 
                 #lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                 #                               lattice, pos1, pos0, t, E_lattice, eps)
+                 #                              lattice, pos1, pos0, t, E_lattice, eps)
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
                 lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
@@ -572,13 +570,13 @@ T = np.arange(1,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
 size = 3
 
-T_num_in = int(3)    # number of initial T-cells
+T_num_in = int(1)    # number of initial T-cells
 B_num_in = int(1)
 muT, muB = -1, -2
 
 BB_int = 4      # interaction energy between bacterias
-TT_int = -1      # interaction energy between T-cells
-BT_int = 2     # interaction energy between bacteria and T-cells
+TT_int = 0 #-1      # interaction energy between T-cells
+BT_int = 0 #2     # interaction energy between bacteria and T-cells
 interaction_matrix = np.array([
     [0, 0, 0],
     [0, TT_int, BT_int],
