@@ -225,12 +225,14 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
 
     if Ediff < 0 :
         add = True
+        print('addB: Ediff<0')
     
     else:
         probability = np.exp(-Ediff/T)
         #print('p_B:', probability)
         if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
-            add = True 
+            add = True
+            print('addB:', E_total, Ediff) 
         else:
             add = False
         
@@ -315,10 +317,12 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
 
     if Ediff < 0:
         remove = True
+        print('removeB: Ediff<0')
     else: 
         probability = np.exp(-Ediff/T)
     if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
         remove = True 
+        print('removeB:', E_total, Ediff)
     else:
         remove = False
     if remove:
@@ -332,6 +336,7 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
         pos0[:,first_negative_column] = pB
         lattice[pB[0], pB[1]] = 0
         E_total = E_total + Ediff
+        print(E_total, Ediff)
         B_num = B_num -1
     else:
         pass
@@ -433,8 +438,10 @@ def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
 def gridprint(lattice):
     lattice_length = len(lattice)
     cmap = plt.cm.colors.ListedColormap(['blue', 'white', 'red'])
+    #cmap = plt.cm.colors.ListedColormap(['white', 'blue', 'red'])
     plt.imshow(lattice, cmap=cmap, extent=[0, lattice_length, 0, lattice_length])
     plt.colorbar(ticks=[1, 0, 2], label="Legend")
+    #plt.colorbar(ticks=[0, 1, 2], label="Legend")
     plt.title("Lattice with T's (Blue) and B's (Red)")
     #plt.grid(True, linewidth=0.5, color='black')
     plt.show()
@@ -452,34 +459,35 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         E_lattice = lattice_energy(lattice, eps, muT, muB)
         B_num_for_Temp = np.zeros(num_runs, dtype = int)
         B_num = B_num_in
-        #gridprint(lattice)
+        gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
-            
+            print(i)
             if np.all(pos0 < 0): # if no holes -> only attempt remove B 
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_removeB(
                     lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #print("Lattice is full at iteration:", i)
             elif np.all(pos2 < 0): # if no B's -> only attempt move T and add B 
-                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                                                lattice, pos1, pos0, t, E_lattice, eps)
+                #lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
+                 #                               lattice, pos1, pos0, t, E_lattice, eps)
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
                                                 lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
             else: # attempt all 
-                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                                                lattice, pos1, pos0, t, E_lattice, eps)
+                #lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
+                 #                               lattice, pos1, pos0, t, E_lattice, eps)
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
                 lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
             B_num_for_Temp[i] = B_num
+            gridprint(lattice)
         B_num_history.append(B_num_for_Temp) 
       #  pos2t.append(pos2.shape[1])
-        #gridprint(lattice)
+            
             #pos0t.append(pos0)
             #pos1t.append(pos1)
-        
+            
         T_num[ind] = np.sum((pos1 != -1).all(axis=0))
         #B_num[ind] = np.sum((pos2 != -1).all(axis=0))
         #Tcell.append(pos1.shape[1])   
@@ -558,17 +566,17 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 20_000
+num_runs = 10
 #Temp = 0.2
-T = np.arange(20,0.01,-1)
+T = np.arange(1,0.01,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 50
+size = 3
 
-T_num_in = int(size**2/2)    # number of initial T-cells
+T_num_in = int(3)    # number of initial T-cells
 B_num_in = int(1)
-muT, muB = -1, -4
+muT, muB = -1, -2
 
-BB_int = 1      # interaction energy between bacterias
+BB_int = 4      # interaction energy between bacterias
 TT_int = -1      # interaction energy between T-cells
 BT_int = 2     # interaction energy between bacteria and T-cells
 interaction_matrix = np.array([
@@ -589,7 +597,6 @@ def B_num_plot(B_num_history, T):
     for i in range(len(T)):
         ax = axes[i]
         T_formatted = f'{T[i]:.2f}'
-       # B_num = B_num_history[i]
         ax.plot(np.arange(0, num_runs), B_num_history[i], '.', markersize = '0.1')
         ax.set_ylabel(f'N_B, T = {T_formatted}')
     plt.tight_layout()
@@ -626,7 +633,6 @@ def E_history_plot(E_history, T, num_runs):
     #fig.suptitle(f'hi there')
     for i in range(len(T)):
         ax = axes[i]
-        
         T_formatted = f'{T[i]:.2f}'
         ax.plot(np.arange(0, num_runs), E_history[E_keys[i]], '.', markersize = '0.1')
         ax.set_yticks(np.arange(yMin, yMax, step = 20))
@@ -652,7 +658,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e5_testTilAnayse'
+file_spec = '1e5_testTilAnayse'   # extra info for filename. Customize
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
