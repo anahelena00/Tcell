@@ -44,67 +44,6 @@ def create_lattice(size, T_num, B_num):
     posB[:,0:B_num] = coor_B
 
     return lattice, posT, posB, pos0
-"""    
-def create_lattice(size, T_num, B_num):
-    lattice = np.zeros([size,size], dtype=int)
-    rng = np.random.default_rng()
-    lat_idx = np.argwhere(lattice == 0)
-    #print('lattice indices before shuffling',lat_idx)
-    rng.shuffle(lat_idx)
-    #print('lattice indices after shuffling',lat_idx)
-    lat_idx = lat_idx.T
-    t_coords = lat_idx[:,0:T_num]
-    #print('t: \n',t_coords)
-    b_coords = lat_idx[:,T_num:T_num+B_num]
-    #print('b: \n',b_coords)
-
-    # number of holes
-    hole_num = int(size**2 - T_num - B_num)
-    #print(hole_num)
-    empty_coords = -1*np.ones([2,size**2], dtype = int)
-   # print(empty_coords, empty_coords.shape[1])
-    empty_coords[:,0:hole_num] = lat_idx[:,T_num+B_num:]
-    #print(empty_coords, empty_coords.shape[1])
-    #print('O: \n',empty_cords)
-
-    # allocate (with -1's) b_coords
-    b_alloc = -1*np.ones([2,size**2],dtype=int)
-    b_alloc[:,0:B_num] = b_coords
-
-    # Assign values to coordinates
-    lattice[t_coords[0], t_coords[1]] = 1
-    lattice[b_coords[0], b_coords[1]] = 2
-
-    return lattice, t_coords, b_alloc, empty_coords
-
-"""
-
-"""
-def create_lattice(size, T_num, B_num):
-    lattice = np.zeros([size,size], dtype=int)
-    rng = np.random.default_rng()
-    lat_idx = np.argwhere(lattice == 0)
-    #print('lattice indices before shuffling',lat_idx)
-    rng.shuffle(lat_idx)
-    #print('lattice indices after shuffling',lat_idx)
-    lat_idx = lat_idx.T
-    t_coords = lat_idx[:,0:T_num]
-    #print('t: \n',t_coords)
-    b_coords = lat_idx[:,T_num:T_num+B_num]
-    #print('b: \n',b_coords)
-    empty_coords = lat_idx[:,T_num+B_num:]
-    #print('O: \n',empty_cords)
-    
-    # Assign values to coordinates
-    lattice[t_coords[0], t_coords[1]] = 1
-    lattice[b_coords[0], b_coords[1]] = 2
-
-    # allocate (with -1's) b_coords
-    b_alloc = -1*np.ones([2,size**2],dtype=int)
-    b_alloc[:,0:B_num] = b_coords
-
-    return lattice, t_coords, b_alloc, empty_coords
-"""
 
 #%%
 # showing lattices as they evolve 
@@ -139,13 +78,6 @@ def position_random(pos):
         #print('3',col)
     p = pos[:,col]
     return p, col
-
-"""
-def position_random(pos): 
-    col = np.random.randint(pos.shape[1]) 
-    p = pos[:,col]
-    return p, col
-"""
 
 #%%
 
@@ -257,53 +189,6 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
     #print(E_total, Ediff)
     return lattice, pos2, pos0, E_total, B_num
 
-"""
-def evaluate_particle_addB(lattice, pos2, pos1, pos0, T, E_total, eps, muT, muB):
-    #print("pos1before",pos1.shape)
-    pb, colb = position_random(pos0) #pick a hole to put bacteria
-    
-    #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
-    ID_B = 2
-    Efin = energy(lattice, ID_B, pb, eps) + muB # energy from interaction and chemical if placed
-    #ID_in = lattice[pb[0], pb[1]]
-    ID_empty = 0
-    Ein = energy(lattice,ID_empty, pb, eps) #evaluate neighbouring energy before
-    
-    #print("Efin , Ein", Efin, Ein)
-    Ediff = Efin - Ein 
-    #print("Ediff ", Ediff)
-
-    if Ediff < 0 :
-        add = True
-    
-    else:
-        #mp.dps = 128
-        #probability = np.float128(np.exp(-(Ediff -muB*pos2.shape[1] -muT*pos1.shape[1])/T) )
-        #probability = mp.exp(-(Ediff - muB * pos2.shape[1] - muT * pos1.shape[1]) / T)
-        probability = np.exp(-Ediff/T)
-        #print('p_B:', probability)
-        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
-            add = True 
-        else:
-            add = False
-        
-    if add: 
-        lattice[pb[0], pb[1]] = 2
-        #print("before",pos2, pb)
-        pos0 = np.delete(pos0, colb, axis=1)
-       # pos2 = np.hstack((pos2, np.array([pb]).reshape(-1, 1)))
-        first_negative_column = np.where(np.any(pos2 < 0, axis=0))[0][0]
-        pos2[:,first_negative_column] = pb
-        #print(pos2)
-        E_total = E_total + Ediff
-        #print("Ediff:", Ediff)
-        
-    else:
-        lattice[pb[0], pb[1]] = 0
-    #print(E_total, Ediff)
-    return lattice, pos2, pos0, E_total
-"""
-
 #%%
 
 def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
@@ -388,49 +273,6 @@ def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
         lattice[p1[0], p1[1]] = 1
     #print(E_total, Ediff)
     return lattice, pos1, pos0, E_total
-    
-"""
-def evaluate_particle_moveT(lattice, pos1, pos0, T, E_total, eps):
-    #print("pos1before",pos1.shape)
-    p1, col1 = position_random(pos1)
-    
-    ID_in = lattice[p1[0], p1[1]]
-    ID_in = int(ID_in)
-    Ein = energy(lattice,ID_in, p1, eps)
-    
-    p0, col0 = position_random(pos0)
-    # seeing what energy would be for particle if it moved the the chosen empty location
-    lattice[p1[0], p1[1]] = 0 # temporarily moving object so not to be seen as neighbor by itself
-    Efin = energy(lattice, ID_in, p0, eps)
-    #print("Efin , Ein", Efin, Ein)
-    Ediff = Efin - Ein
-
-
-    if Ediff < 0 :
-        move = True
-    
-    else:
-        probability = np.exp(-Ediff/T)
-        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
-            move = True 
-        else:
-            move = False
-        
-    if move: 
-        lattice[p0[0], p0[1]] = 1
-        # update arrays containing coordinates of 0's and 1's
-        pos1[:,col1] = [p0[0], p0[1]]
-        pos0[:,col0] = [p1[0], p1[1]]
-        #print(pos1)
-        E_total = E_total + Ediff
-        #print("Ediff:", Ediff)
-        
-    else:
-        lattice[p0[0], p0[1]] = 0
-        lattice[p1[0], p1[1]] = 1
-    #print(E_total, Ediff)
-    return lattice, pos1, pos0, E_total
-"""
 
 #%%
 
@@ -456,7 +298,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         E_lattice = lattice_energy(lattice, eps, muT, muB)
         B_num_for_Temp = np.zeros(num_runs, dtype = int)
         B_num = B_num_in
-        #gridprint(lattice)
+        gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
             #print(i)
@@ -498,64 +340,6 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     
     return lattice, E_history, B_num_history, T_num, run_name #, pos0_hist, pos1_hist, pos2_hist
 
-"""
-def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
-    
-    
-    
-    #print('p0:',pos0,'T:',pos1,'B:',pos2)
-
-    E_history = {}
-    #pos0_hist=[]
-    #pos1_hist=[]
-    #pos2_hist=[]
-    Tcell = []
-    B_num = np.zeros(len(Temp))
-    pos2t= []
-    for ind, t in enumerate(Temp):
-        #lattice_history = []
-        E_history_for_Temp = []
-        #pos0t=[]
-        #pos1t=[]
-        lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
-        E_lattice = lattice_energy(lattice, eps, muT, muB)
-        
-        #gridprint(lattice,lattice_length)
-        for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
-            E_history_for_Temp.append(E_lattice)
-            
-            if any(pos0[1]):
-                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                                                lattice, pos1, pos0, t, E_lattice, eps)
-            
-                lattice, pos2, pos0, E_lattice = evaluate_particle_addB(
-                                                lattice, pos2, pos1, pos0, t, E_lattice, eps, muT, muB)
-                
-        pos2t.append(pos2.shape[1])
-                #gridprint(lattice,lattice_length)
-            #pos0t.append(pos0)
-            #pos1t.append(pos1)
-        
-            
-        B_num[ind] = pos2[1].size
-        Tcell.append(pos1.shape[1])   
-
-        E_history[t] = E_history_for_Temp.copy()
-        #gridprint(lattice,lattice_length)
-        
-        #pos0_hist.append(pos0t)
-        #pos1_hist.append(pos1t)
-        #pos2_hist.append(pos2t)
-        
-    # Unique name for data file 
-    current_datetime = datetime.now()
-    datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
-    run_name = f'{datetime_str}'
-    
-    return lattice, E_history, B_num, pos2t, run_name #, pos0_hist, pos1_hist, pos2_hist
-    
-"""
-
 #%%
 
 
@@ -563,20 +347,21 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 100
-T = np.arange(20, 0.1, -1)
+num_runs = 1000
+#T = np.arange(20, 0.1, -1)
 #T = np.arange(1,0.01,-0.5)
-#T = np.arange(50,48,-1)
+T = np.arange(50,48,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
 size = 20
 
-T_num_in = int(size**2/2)    # number of initial T-cells
+#T_num_in = int(size**2/2)    # number of initial T-cells
+T_num_in  = 1
 B_num_in = int(1)
-muT, muB = -1, -1
+muT, muB = -1, -4
 
 BB_int = 0     # interaction energy between bacterias
 TT_int = -1      # interaction energy between T-cells
-BT_int = 2     # interaction energy between bacteria and T-cells
+BT_int = -2     # interaction energy between bacteria and T-cells
 interaction_matrix = np.array([
     [0, 0, 0],
     [0, TT_int, BT_int],
