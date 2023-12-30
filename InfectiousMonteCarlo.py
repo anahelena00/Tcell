@@ -225,14 +225,14 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
 
     if Ediff < 0 :
         add = True
-        print('addB: Ediff<0')
+        #print('addB: Ediff<0')
     
     else:
         probability = np.exp(-Ediff/T)
         #print('p_B:', probability)
         if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
             add = True
-            print('addB:', E_total, Ediff) 
+#            print('addB:', E_total, Ediff) 
         else:
             add = False
         
@@ -317,14 +317,14 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
 
     if Ediff < 0:
         remove = True
-        print('removeB: Ediff<0')
+#        print('removeB: Ediff<0')
     else: 
         probability = np.exp(-Ediff/T)
-    if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
-        remove = True 
-        print('removeB:', E_total, Ediff)
-    else:
-        remove = False
+        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
+            remove = True 
+            #print('removeB:', E_total, Ediff)
+        else:
+            remove = False
     if remove:
         # remove B from posB        
         posB = posB.copy()
@@ -336,7 +336,6 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
         pos0[:,first_negative_column] = pB
         lattice[pB[0], pB[1]] = 0
         E_total = E_total + Ediff
-        print(E_total, Ediff)
         B_num = B_num -1
     else:
         pass
@@ -457,29 +456,29 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         E_lattice = lattice_energy(lattice, eps, muT, muB)
         B_num_for_Temp = np.zeros(num_runs, dtype = int)
         B_num = B_num_in
-        gridprint(lattice)
+        #gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
-            print(i)
+            #print(i)
             if np.all(pos0 < 0): # if no holes -> only attempt remove B 
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_removeB(
                     lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #print("Lattice is full at iteration:", i)
             elif np.all(pos2 < 0): # if no B's -> only attempt move T and add B 
-                #lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                 #                              lattice, pos1, pos0, t, E_lattice, eps)
+                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
+                                              lattice, pos1, pos0, t, E_lattice, eps)
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
                                                 lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
             else: # attempt all 
-                #lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                 #                              lattice, pos1, pos0, t, E_lattice, eps)
+                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
+                                              lattice, pos1, pos0, t, E_lattice, eps)
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
                 lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
             B_num_for_Temp[i] = B_num
-            gridprint(lattice)
+        gridprint(lattice)
         B_num_history.append(B_num_for_Temp) 
       #  pos2t.append(pos2.shape[1])
             
@@ -564,19 +563,20 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10
-#Temp = 0.2
-T = np.arange(1,0.01,-1)
+num_runs = 100
+T = np.arange(20, 0.1, -1)
+#T = np.arange(1,0.01,-0.5)
+#T = np.arange(50,48,-1)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 3
+size = 20
 
-T_num_in = int(1)    # number of initial T-cells
+T_num_in = int(size**2/2)    # number of initial T-cells
 B_num_in = int(1)
-muT, muB = -1, -2
+muT, muB = -1, -1
 
-BB_int = 4      # interaction energy between bacterias
-TT_int = 0 #-1      # interaction energy between T-cells
-BT_int = 0 #2     # interaction energy between bacteria and T-cells
+BB_int = 0     # interaction energy between bacterias
+TT_int = -1      # interaction energy between T-cells
+BT_int = 2     # interaction energy between bacteria and T-cells
 interaction_matrix = np.array([
     [0, 0, 0],
     [0, TT_int, BT_int],
@@ -595,7 +595,7 @@ def B_num_plot(B_num_history, T):
     for i in range(len(T)):
         ax = axes[i]
         T_formatted = f'{T[i]:.2f}'
-        ax.plot(np.arange(0, num_runs), B_num_history[i], '.', markersize = '0.1')
+        ax.plot(np.arange(0, num_runs), B_num_history[i], '.', markersize = '0.5')
         ax.set_ylabel(f'N_B, T = {T_formatted}')
     plt.tight_layout()
     plt.show()
