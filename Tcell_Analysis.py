@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 #%% 
 
-file_name = '20231231-15-00_1e6_T033_B1.npz'
+file_name = '20231231-17-33_1e5_T033_B1_muT8neg.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
@@ -26,6 +26,8 @@ ind_equi = data_dict['ind_equi'],
 E_mean = data_dict['E_mean']
 E_var = data_dict['E_var']
 num_runs = data_dict['num_runs']
+
+ind_equi = ind_equi[0].item()
 
 
 #%%
@@ -72,13 +74,21 @@ def the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size):
 B_num = np.zeros(len(T), dtype = int)
 for i in range(len(T)):
     B_num[i] = int(np.mean(B_num_history[i][ind_equi:]))
-#M = multiplicity(size, B_num, T_num)
+B_rho = B_num/size**2
+
+# B density
+plt.figure()
+plt.plot(T, B_rho, '.')
+plt.xlabel('T')
+plt.ylabel('density')
+plt.show()
 
 #%%  
 Cv_grad, Cv_var, Sgrad, Svar, F, G = the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size) 
 
 #%%
 # FIGURES 
+
 
 # Mean Energy
 plt.figure()
