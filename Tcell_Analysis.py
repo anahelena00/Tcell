@@ -1,73 +1,94 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[64]:
-
+#%%
 
 import numpy as np
+import math as math
 import matplotlib.pyplot as plt
-import os
-from datetime import datetime
 
-file_name = '20231120-23-20_1e4_lala.npz'
+#%% 
 
-current_dir = os.getcwd()
-new_dir = f'{current_dir}/'
-file_dir = f'{new_dir}{file_name}'
-
-npzfile = np.load(file_dir)
+file_name = '20231231-16-27_1e5_T033_B1.npz'
+npzfile = np.load(file_name)
 
 keys = npzfile.files
-for key in keys:
-    locals()[key] = npzfile[key]
-# print('keys:',keys)    
-# keys: ['T', 'eps', 'muT', 'muB', 'Tcell_num', 'B_num', 'size', 'E_mean', 'E_variance', 'num_runs']
+data_dict = {key: npzfile[key] for key in keys}
+locals().update(data_dict)
+#print('keys:',keys)    
+T = data_dict['T'] 
+eps = data_dict['eps'] 
+muT = data_dict['muT']
+muB = data_dict['muB']
+T_num_in = data_dict['T_num_in']
+T_num = data_dict['T_num']
+B_num_in = data_dict['B_num_in']
+B_num_history = data_dict['B_num_history']
+size = data_dict['size']
+ind_equi = data_dict['ind_equi'],
+E_mean = data_dict['E_mean']
+E_var = data_dict['E_var']
+num_runs = data_dict['num_runs']
 
-E_var = E_variance
-T_num = Tcell_num
 
-
-# In[67]:
-
+#%%
 
 def stirling(x):
     res = x*np.log(x)-x
     return res
 
-def multiplicity(size, B_num):
-    N = size**2
-    multiplicity = stirling(N)-stirling(B_num)-stirling(N-B_num)
-    return multiplicity
+def ln_multiplicity(x):
+    if x > 20:
+        res = x*np.log(x)-x     # stirlings approximation
+    else:
+        res = np.log(math.factorial(x))
+    return res
 
-def the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT, size):
+def S_reference(size, B_num, T_num):
+    N = size**2
+    N_0 = N - B_num - T_num # N_0=0 if full then omit from Omega
+    S_ref = np.zeros(len(B_num), dtype = int)
+    for i in range(len(S_ref)):
+        S_ref[i] = ln_multiplicity(N) - ln_multiplicity(T_num[i]) - ln_multiplicity(B_num[i]) - ln_multiplicity(N_0[i])
+    return S_ref
+
+def the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size):
      
-    S_ref = np.log(M)   
+    S_ref = S_reference(size, B_num, T_num)   
+#    print(S_ref)
     G_T = muT*T_num
-    G_B = muB*B_num[-1]
+   # G_B = muB*B_num[-1]
+    G_B = muB*B_num
     
-    Cv_variance = np.zeros([len(T)])
-    G = np.zeros([len(T)])
-    for i in range(len(T)):
-        x = (B_num[i]+T_num)/size**2
-        #print(x)
-        Cv_variance[i] = E_var[i]/T[i]**2
-        G[i] = (1-x)*G_T + x*G_B - T[i]*(x*np.log(x)+(1-x)*np.log(1-x))
-        #print(T[i])
-    Cv_gradient = np.gradient(E_mean,T)        
+    #x = (B_num+T_num)/size**2   
+    x = (B_num+T_num)/size**2  
+    G = (1-x)*G_T + x*G_B - T*(x*np.log(x)+(1-x)*np.log(1-x))*size**2
+    #G = T*(x*np.log(x)+(1-x)*np.log(1-x))
+    #print((1-x)*G_T + x*G_B, T*(x*np.log(x)+(1-x)*np.log(1-x)))
+    Cv_variance = E_var/T**2
+    Cv_gradient = np.gradient(E_mean, T)        
     Sgrad = S_ref - np.cumsum(Cv_gradient)
     Svar = S_ref - np.cumsum(Cv_variance)
     F = E_mean - T*Sgrad
      
-    return Cv_gradient, Cv_variance, Sgrad, Svar, F, G
+    return Cv_gradient, Cv_variance, Sgrad, Svar, F, G, x
 
-M = multiplicity(size, B_num)
-Cv_grad, Cv_var, Sgrad, Svar, F, G =the_physics(T, E_mean, E_var, M, B_num, muB, T_num, muT,size) 
+#%% 
+ind_equi = int((0.7)*num_runs) 
+B_num = np.zeros(len(T), dtype = int)
+for i in range(len(T)):
+    B_num[i] = int(np.mean(B_num_history[i][ind_equi:]))
+#M = multiplicity(size, B_num, T_num)
 
+#%%  
+Cv_grad, Cv_var, Sgrad, Svar, F, G, density = the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size) 
+
+P = np.gradient(F,size)
+
+#print(B_num_history)
+#%%
 # FIGURES 
 
 # Mean Energy
 plt.figure()
-plt.plot(T,E_mean,'o')
+plt.plot(T, E_mean,'o')
 plt.xlabel('Temperature')
 plt.ylabel('Mean Energy')
 #plt.title(f'Mean Energy, T_num: {Tcell_num}, B_num: {Bacteria_num}')
@@ -109,15 +130,26 @@ plt.legend()
 #plt.savefig(f'Runs_data/{datetime_str}Cv.png')
 plt.show()
 
+# Pressure   
+plt.figure()
+plt.plot(T,P,'o')
+#plt.plot(T,Cv_var, '.', markersize = '10', color = 'darkblue', label = 'From variance')
+plt.xlabel('Temperature')
+plt.ylabel('$P$')
+plt.title(f'Pressure')
+plt.legend()
+#plt.savefig(f'Runs_data/{datetime_str}Cv.png')
+plt.show()
 
-# In[ ]:
+# Density   
+plt.figure()
+plt.plot(density,T,'o')
+#plt.plot(T,Cv_var, '.', markersize = '10', color = 'darkblue', label = 'From variance')
+plt.ylabel('Temperature')
+plt.xlabel('density')
+plt.title(f'density vs T')
+plt.legend()
+#plt.savefig(f'Runs_data/{datetime_str}Cv.png')
+plt.show()
 
-
-
-
-
-# In[ ]:
-
-
-
-
+# %%
