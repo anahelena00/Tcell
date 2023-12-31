@@ -7,9 +7,8 @@ import random
 import matplotlib.pyplot as plt
 import numba
 import time
-import os
 from datetime import datetime
-from mpmath import mp
+
 
 
 #%%
@@ -150,7 +149,6 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
     #ID_in = lattice[pb[0], pb[1]]
     ID_empty = 0
     Ein = energy(lattice,ID_empty, p0, eps) #evaluate neighbouring energy before
-    
     #print("Efin , Ein", Efin, Ein)
     Ediff = Efin - Ein 
     #print("Ediff ", Ediff)
@@ -303,34 +301,21 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
             E_history_for_Temp.append(E_lattice)
             #print(i)
             if np.all(pos0 < 0): # if no holes -> only attempt remove B 
-                lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_removeB(
-                    lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_removeB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #print("Lattice is full at iteration:", i)
             elif np.all(pos2 < 0): # if no B's -> only attempt move T and add B 
-                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                                              lattice, pos1, pos0, t, E_lattice, eps)
-                lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
-                                                lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(lattice, pos1, pos0, t, E_lattice, eps)
+                lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
             else: # attempt all 
-                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
-                                              lattice, pos1, pos0, t, E_lattice, eps)
+                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(lattice, pos1, pos0, t, E_lattice, eps)
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
                 lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
-                #lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
             B_num_for_Temp[i] = B_num
         #gridprint(lattice)
-        B_num_history.append(B_num_for_Temp) 
-      #  pos2t.append(pos2.shape[1])
-            
-            #pos0t.append(pos0)
-            #pos1t.append(pos1)
-            
+        B_num_history.append(B_num_for_Temp)     
         T_num[ind] = np.sum((pos1 != -1).all(axis=0))
-        #B_num[ind] = np.sum((pos2 != -1).all(axis=0))
-        #Tcell.append(pos1.shape[1])   
-
         E_history[t] = E_history_for_Temp.copy()
   
     # Unique name for data file 
@@ -342,12 +327,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 
 #%%
 
-
 # the interaction matrix can be used to decide how many bacteria are able to multiply. 
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 100_000
+num_runs = 1_000
 T_interval1 = np.arange(20, 10, -1)
 T_interval2 = np.arange(10, 3, -0.5)
 T_interval3 = np.arange(3, 0.2, -0.2)
@@ -416,7 +400,7 @@ def E_history_plot(E_history, T, num_runs):
     yMax = max(E_history)
 
     E_keys = list(E_history.keys())
-    # Create subplots
+    #Create subplots
     _, axes = plt.subplots(len(T), 1, figsize=(8, 2*len(T)))
     for i in range(len(T)):
         ax = axes[i]
