@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 #%% 
 
-file_name = '20231231-01-29_1e5_T033_B1.npz'
+file_name = '20231231-15-00_1e6_T033_B1.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
@@ -69,7 +69,6 @@ def the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size):
     return Cv_gradient, Cv_variance, Sgrad, Svar, F, G
 
 #%% 
-ind_equi = int((0.7)*num_runs) 
 B_num = np.zeros(len(T), dtype = int)
 for i in range(len(T)):
     B_num[i] = int(np.mean(B_num_history[i][ind_equi:]))
