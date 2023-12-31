@@ -347,7 +347,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10_000
+num_runs = 100_000
 T_interval1 = np.arange(20, 10, -1)
 T_interval2 = np.arange(10, 3, -0.5)
 T_interval3 = np.arange(3, 0.2, -0.2)
@@ -445,7 +445,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e4_T033_B1'   # extra info for filename. Customize
+file_spec = '1e5_T033_B1'   # extra info for filename. Customize
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
@@ -458,6 +458,7 @@ np.savez(file_name,
          B_num_in = B_num_in,
          B_num_history = B_num_history,
          size = size,
+         ind_equi = ind_equi,
          E_mean = E_mean,
          E_var = E_var,
          num_runs = num_runs,        

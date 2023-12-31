@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 #%% 
 
-file_name = '20231229-15-34_1e5_testTilAnayse.npz'
+file_name = '20231231-01-29_1e5_T033_B1.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
@@ -22,6 +22,7 @@ T_num = data_dict['T_num']
 B_num_in = data_dict['B_num_in']
 B_num_history = data_dict['B_num_history']
 size = data_dict['size']
+ind_equi = data_dict['ind_equi'],
 E_mean = data_dict['E_mean']
 E_var = data_dict['E_var']
 num_runs = data_dict['num_runs']
@@ -32,28 +33,6 @@ num_runs = data_dict['num_runs']
 def stirling(x):
     res = x*np.log(x)-x
     return res
-"""
-def multiplicity2(size, B_num):
-    N = size**2
-    multiplicity = stirling(N)-stirling(B_num)-stirling(N-B_num)
-    return multiplicity
-"""
-
-
-def multiplicity(size, B_num, T_num):
-    N = size**2
-    N_0 = N - B_num - T_num # N_0=0 if full then omit from Omega
-    Omega = np.zeros(len(B_num), dtype = int)
-    for i in range(len(Omega)):
-        if N_0[i] == 0:
-            Omega[i] = math.factorial(N)/(math.factorial(B_num[i])*math.factorial(T_num[i]))
-        else:         
-            #Omega[i] = math.factorial(N)/(math.factorial(N_0[i]) 
-             #   * math.factorial(B_num[i]) * math.factorial(T_num[i]))
-            Omega[i] = stirling(N)/(stirling(N_0[i]) 
-               * stirling(B_num[i]) * stirling(T_num[i]))
-            print(Omega[i])
-    return Omega
 
 def ln_multiplicity(x):
     if x > 20:
@@ -73,7 +52,7 @@ def S_reference(size, B_num, T_num):
 def the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size):
      
     S_ref = S_reference(size, B_num, T_num)   
-    print(S_ref)
+#    print(S_ref)
     G_T = muT*T_num
    # G_B = muB*B_num[-1]
     G_B = muB*B_num
@@ -90,7 +69,7 @@ def the_physics(T, E_mean, E_var, B_num, muB, T_num, muT, size):
     return Cv_gradient, Cv_variance, Sgrad, Svar, F, G
 
 #%% 
-ind_equi = int((0.4)*num_runs) 
+ind_equi = int((0.7)*num_runs) 
 B_num = np.zeros(len(T), dtype = int)
 for i in range(len(T)):
     B_num[i] = int(np.mean(B_num_history[i][ind_equi:]))
