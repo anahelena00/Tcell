@@ -80,18 +80,28 @@ def position_random(pos):
     return p, col
 
 #%%
-def create_unmix_lattice(size, T_num, B_num): #TAKES A NUMBER OF BS AND TS AND PUTS THEM IN LEFT/RIGHT
+def create_unmix_lattice(size, num_1s, num_2s): #TAKES A NUMBER OF BS AND TS AND PUTS THEM IN LEFT/RIGHT
 
     lattice = np.zeros([size, size], dtype=int)
 
     # Calculate the number of holes
-    hole_num = size**2 - B_num - T_num
-
+    hole_num = size**2 - num_2s - num_1s
+    
+    rows= size
     # Place type 2 particles at the top
-    lattice[:B_num, :] = 2
+    #lattice[:num_2s, :] = 2
+    for i in range(rows):
+        if  num_2s>0:
+            lattice[:,0:num_2s][i] =2
+            num_2s = num_2s -size
     #print(lattice)
     # Place type 1 particles at the bottom
-    lattice[-T_num:, :] = 1
+    #lattice[-num_1s:, :] = 1
+    for i in range(rows):
+        if  num_1s>0:
+            lattice[:,0:num_1s][size-i-1] =1
+            num_1s = num_1s -size
+    #lattice[:,0:num_1s][-1] =1
     #print(lattice)
     # Randomly select positions for type 0 particles without replacement
     coor_0 = np.argwhere(lattice == 0)
@@ -101,11 +111,14 @@ def create_unmix_lattice(size, T_num, B_num): #TAKES A NUMBER OF BS AND TS AND P
     coor_2 = np.argwhere(lattice == 2)
     coor_0 = np.argwhere(lattice == 0)
     coor_1 = np.argwhere(lattice == 1)
-
+    
+    
     # Initialize position arrays
     pos2 = coor_2.T
     pos0 = coor_0.T
     pos1 = coor_1.T
+
+    return lattice, pos2, pos1, pos0
 
     return lattice, pos2, pos1, pos0
 #%%
@@ -386,7 +399,7 @@ T = np.concatenate((T_interval1, T_interval2, T_interval3))
 #T = np.arange(20, 0.1, -1)
 #T = np.arange(1,0.01,-0.5)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 15
+size = 50
 
 #T_num_in = int(size**2/2)    # number of initial T-cells
 #T_num_in  = int(size**2/3)
@@ -403,7 +416,7 @@ interaction_matrix = np.array([
     [0, BT_int, BB_int]
 ])
 #%% This is to get U_unmixed for Gibbs energy
-#print(create_unmix_lattice(size, T_num_in, B_num_in)[0], size, T_num_in, B_num_in)
+print(create_unmix_lattice(size, T_num_in, B_num_in)[0][0], size, T_num_in, B_num_in)
 #%%
 lattice, E_history, B_num_history, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
