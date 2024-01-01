@@ -120,7 +120,6 @@ def create_unmix_lattice(size, num_1s, num_2s): #TAKES A NUMBER OF BS AND TS AND
 
     return lattice, pos2, pos1, pos0
 
-    return lattice, pos2, pos1, pos0
 #%%
 
 def energy(lattice, ID_in, pos_hypo, interaction_matrix):
@@ -337,7 +336,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     #E_history_unmixed ={}
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
-        #E_history_for_Temp_unmixed =[]
+        E_history_for_Temp_unmixed =[]
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
         E_lattice = lattice_energy(lattice, eps, muT, muB)
         B_num_for_Temp = np.zeros(num_runs, dtype = int)
@@ -365,7 +364,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
             B_num_for_Temp[i] = B_num
         #gridprint(lattice)
-        B_num_history.append(B_num_for_Temp) 
+        B_num_history.append(B_num_for_Temp)
+        #Sum of the energy of 2 lattices: one with just T-cells and the other with just bacteria
+        U_unmix = lattice_energy(create_unmix_lattice(lattice_length, 0,B_num)[0], eps, muT, muB) +lattice_energy(create_unmix_lattice(lattice_length, T_num_in,0)[0], eps, muT, muB)
+        E_history_for_Temp_unmixed.append( U_unmix)
+         
       #  pos2t.append(pos2.shape[1])
             
             #pos0t.append(pos0)
@@ -381,7 +384,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     current_datetime = datetime.now()
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
     run_name = f'{datetime_str}'
-    
+    print(E_history_for_Temp_unmixed) 
     return lattice, E_history, B_num_history, T_num, run_name #, pos0_hist, pos1_hist, pos2_hist
 
 #%%
@@ -416,7 +419,7 @@ interaction_matrix = np.array([
     [0, BT_int, BB_int]
 ])
 #%% This is to get U_unmixed for Gibbs energy
-print(create_unmix_lattice(size, T_num_in, B_num_in)[0][0], size, T_num_in, B_num_in)
+#print(create_unmix_lattice(size, T_num_in, B_num_in)[0][0], size, T_num_in, B_num_in)
 #%%
 lattice, E_history, B_num_history, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 
