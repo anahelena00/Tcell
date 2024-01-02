@@ -5,8 +5,10 @@ import math as math
 import matplotlib.pyplot as plt
 
 #%% 
-
-file_name = '20231231-17-33_1e5_T033_B1_muT8neg.npz'
+file_name = '20240101-00-09_7e4_T0_B1.npz'
+#file_name = '20231231-19-47_7e4_T033_B1_s50.npz'
+#file_name = '20231231-20-11_7e4_T033_B1_s70.npz'
+#file_name = '20231231-20-39_7e4_T033_B1_s100.npz'
 npzfile = np.load(file_name)
 
 keys = npzfile.files
@@ -81,6 +83,7 @@ plt.figure()
 plt.plot(T, B_rho, '.')
 plt.xlabel('T')
 plt.ylabel('density')
+#plt.yticks([0,1])
 plt.show()
 
 #%%  

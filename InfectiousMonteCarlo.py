@@ -6,7 +6,6 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 import numba
-import time
 from datetime import datetime
 
 
@@ -287,6 +286,7 @@ def gridprint(lattice):
 
 
 #%%
+@numba.jit
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
     
     E_history = {}
