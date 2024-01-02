@@ -232,6 +232,58 @@ def evaluate_particle_addB(lattice, pos2, pos0, T, E_total, eps, muB, B_num):
 
 #%%
 
+def evaluate_particle_addT(lattice, pos1, pos0, T, E_total, eps, muT, T_num):
+    
+    p0, colT = position_random(pos0) #pick a hole to put bacteria
+    
+  #  assert lattice[p0[0],p0[1]] == 0
+    #ID_in= lattice[pb[0], pb[1]] #change it in the lattice
+    ID_B = 1
+    Efin = energy(lattice, ID_B, p0, eps) + muT # energy from interaction and chemical if placed
+    #ID_in = lattice[pb[0], pb[1]]
+    ID_empty = 0
+    Ein = energy(lattice,ID_empty, p0, eps) #evaluate neighbouring energy before
+    
+    #print("Efin , Ein", Efin, Ein)
+    Ediff = Efin - Ein 
+    #print("Ediff ", Ediff)
+
+    if Ediff < 0 :
+        add = True
+        #print('addB: Ediff<0')
+    
+    else:
+        probability = np.exp(-Ediff/T)
+        #print('p_B:', probability)
+        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
+            add = True
+#            print('addB:', E_total, Ediff) 
+        else:
+            add = False
+        
+    if add: 
+        lattice[p0[0], p0[1]] = 2
+        #print("before",pos2, pb)
+        #pos0 = np.delete(pos0, colb, axis=1)
+        #print('before', pos0, colb)
+        pos0 = pos0.copy()
+        pos0[:,colT:-1] = pos0[:,colT+1:]
+        #print('after', pos0)
+        first_negative_column = np.where(np.any(pos1 < 0, axis=0))[0][0]
+        pos1 = pos1.copy()
+        pos1[:,first_negative_column] = p0
+        #print(pos2)
+        E_total = E_total + Ediff
+        T_num = T_num + 1
+        #print("Ediff:", Ediff)
+        
+    else:
+        lattice[p0[0], p0[1]] = 0
+    #print(E_total, Ediff)
+    return lattice, pos1, pos0, E_total, T_num
+
+#%%
+
 def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
 
     pB, colB = position_random(posB)
@@ -267,6 +319,44 @@ def evaluate_particle_removeB(lattice, posB, pos0, T, E_total, eps, muB, B_num):
         pass
 
     return lattice, posB, pos0, E_total, B_num
+
+#%%
+#CHANGE BELLOW!
+def evaluate_particle_removeT(lattice, posT, pos0, T, E_total, eps, muT, T_num):
+
+    pT, colT = position_random(posT)
+    ID_B = lattice[pT[0], pT[1]]
+   # assert ID_B == 2, f"ID_B not 2 but {ID_B}"
+    Ein = energy(lattice, ID_B, pT, eps)
+    Efin = energy(lattice, 0, pT, eps) - muT  # energy if particle is removed 
+    Ediff = Efin - Ein
+
+    if Ediff < 0:
+        remove = True
+#        print('removeB: Ediff<0')
+    else: 
+        probability = np.exp(-Ediff/T)
+        if random.random() < probability: # random.random gives between 0 and 1. Hence higher prob -> more move
+            remove = True 
+            #print('removeB:', E_total, Ediff)
+        else:
+            remove = False
+    if remove:
+        # remove B from posB        
+        posT = posT.copy()
+        posT[:,colT:-1] = posT[:,colT+1:]
+
+        # add 0 on old Bs coordinates
+        first_negative_column = np.where(np.any(pos0 < 0, axis=0))[0][0]
+        pos0 = pos0.copy()
+        pos0[:,first_negative_column] = pT
+        lattice[pT[0], pT[1]] = 0
+        E_total = E_total + Ediff
+        T_num = T_num -1
+    else:
+        pass
+
+    return lattice, posT, pos0, E_total, T_num
 
 #%%
 
@@ -345,21 +435,36 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
             #print(i)
-            if np.all(pos0 < 0): # if no holes -> only attempt remove B 
+            if np.all(pos0 < 0): # if no holes -> only attempt remove B and T
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_removeB(
                     lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                lattice, pos1, pos0, E_lattice, T_num = evaluate_particle_removeT(lattice, pos1, pos0, t, E_lattice, eps, muT, T_num)
                 #print("Lattice is full at iteration:", i)
-            elif np.all(pos2 < 0): # if no B's -> only attempt move T and add B 
+                
+            elif np.all(pos2 < 0): # if no B's -> only attempt move, add and remove T and add B 
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                               lattice, pos1, pos0, t, E_lattice, eps)
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(
                                                 lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
-                #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                   
+                selected_functionT = random.choice([evaluate_particle_addT, evaluate_particle_removeT])
+                lattice, pos1, pos0, E_lattice, T_num = selected_functionT(lattice, pos1, pos0, t, E_lattice, eps, muT, T_num)
+                #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"
+                
+            elif np.all(pos1 < 0): # if no T's -> only attempt move and add T and add/remove B
+                lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
+                                              lattice, pos1, pos0, t, E_lattice, eps)
+                lattice, pos1, pos0, E_lattice, T_num = evaluate_particle_addT(lattice, pos1, pos0, t, E_lattice, eps, muT, T_num)
+                selected_functionB = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
+                lattice, pos2, pos0, E_lattice, B_num = selected_functionB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"  
+                                 
             else: # attempt all 
                 lattice, pos1, pos0, E_lattice = evaluate_particle_moveT(
                                               lattice, pos1, pos0, t, E_lattice, eps)
-                selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
-                lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                selected_functionB = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
+                lattice, pos2, pos0, E_lattice, B_num = selected_functionB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
+                selected_functionT = random.choice([evaluate_particle_addT, evaluate_particle_removeT])
+                lattice, pos1, pos0, E_lattice, T_num = selected_functionT(lattice, pos1, pos0, t, E_lattice, eps, muT, T_num)
                 #lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_addB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
             B_num_for_Temp[i] = B_num
