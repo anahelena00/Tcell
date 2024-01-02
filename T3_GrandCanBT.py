@@ -73,6 +73,7 @@ def position_random(pos):
        if num_coords > 0: 
            col = np.random.randint(pos[:,0:num_coords].shape[1])
            #print('2',col)
+        
     else:
         col = np.random.randint(pos.shape[1])
         #print('3',col)
@@ -324,18 +325,28 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 
 
             if np.all(pos0 < 0): # if no holes -> only attempt remove B 
-                lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = evaluate_particle_remove(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
+                if np.all(pos[selec_idx] < 0):
+                    pass
+                else:
+                    lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = evaluate_particle_remove(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
+                
                 #print("Lattice is full at iteration:", i)
-            elif np.all(pos[selec_idx] < 0): # if no B's -> only attempt move T and add B 
+               # print(pos0)
+            elif np.all(pos0 > 0): # if no B's -> only attempt move T and add B 
                 #assert np.any(pos0 > 0), f"when adding T there was no 0)"
                 lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = evaluate_particle_add(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
-                #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"                
+                #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"  
+               # print(pos0)              
             else: # attempt all 
                # assert np.any(pos0 > 0), f"when random T there was no 0)"
-                selected_function = random.choice([evaluate_particle_add, evaluate_particle_remove])
-                lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = selected_function(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
+               # print("attempt all, pos0", pos0, ", pos:", selec_idx,  pos[selec_idx])
+                if np.all(pos[selec_idx] < 0):
+                    pass
+                else:
+                    selected_function = random.choice([evaluate_particle_add, evaluate_particle_remove])
+                    lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = selected_function(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
-
+                #print(pos0)
             Num_for_Temp[selec_idx][i] = Num[selec_idx]
            # T_num_for_Temp[i] = T_num
         gridprint(lattice)
@@ -356,7 +367,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10000
+num_runs = 10_000
 T_interval1 = np.arange(20, 10, -1)
 T_interval2 = np.arange(10, 3, -0.5)
 T_interval3 = np.arange(3, 0.2, -0.2)
@@ -365,7 +376,7 @@ T = np.arange(5, 1, -1)
 #T = np.arange(20, 0.1, -1)
 #T = np.arange(1,0.01,-0.5)
 #T = np.arange(.1,.01,-0.1) ##Test
-size = 50
+size = 2
 
 #T_num_in = int(size**2/2)    # number of initial T-cells
 T_num_in  = int(1)
