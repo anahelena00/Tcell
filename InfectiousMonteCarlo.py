@@ -37,7 +37,9 @@ def create_lattice(size, T_num, B_num):
     pos0 = -1*np.ones([2,size**2], dtype = int)
     pos0[:,0:hole_num] = coor_0
     # 
-    posT = coor_T
+    posT = -1*np.ones([2,size**2], dtype = int)
+    posT[:,0:T_num] = coor_T
+
     # allocate (with -1's) b_coords
     posB = -1*np.ones([2,size**2],dtype=int)
     posB[:,0:B_num] = coor_B
