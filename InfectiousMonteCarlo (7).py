@@ -138,7 +138,7 @@ def lattice_energy(lattice, eps, muT, muB):
     return E_total
 #%%
 def create_unmix_lattice(size, num_1s, num_2s): #Takes a number of particles and places in a lattice
-
+    
     lattice = np.zeros([size, size], dtype=int)
 
     # Calculate the number of holes
@@ -179,7 +179,41 @@ def create_unmix_lattice(size, num_1s, num_2s): #Takes a number of particles and
     pos2 = coor_2.T
     pos0 = coor_0.T
     pos1 = coor_1.T
+    '''
+    lattice = np.zeros([size, size], dtype=int)
 
+    # Calculate the number of holes
+    hole_num = size**2 - num_2s - num_1s
+
+    # Place type 2 particles at the top
+    for i in range(size):
+        if num_2s > 0:
+            lattice[:, 0:num_2s][i] = 2
+            num_2s = num_2s - size
+        else:
+            pass
+
+    # Place type 1 particles at the bottom
+    for i in range(size):
+        if num_1s > 0:
+            lattice[:, 0:num_1s][size - i - 1] = 1
+            num_1s = num_1s - size
+        else:
+            pass
+
+    # Randomly select positions for type 0 particles without replacement
+    coor_0 = np.argwhere(lattice == 0)
+
+    # Find coordinates of each type of particle
+    coor_2 = np.argwhere(lattice == 2)
+    coor_0 = np.argwhere(lattice == 0)
+    coor_1 = np.argwhere(lattice == 1)
+
+    # Initialize position arrays
+    pos2 = coor_2.T
+    pos0 = coor_0.T
+    pos1 = coor_1.T
+    '''
     return lattice, pos2, pos1, pos0
 #%%
 
@@ -336,19 +370,19 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     E_history = {}
     T_num = np.zeros(len(Temp), dtype=int)
     B_num_history = []
-    E_history_unmix = {}
+    #E_history_unmix = {}
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
         E_history_for_Temp_unmix = []
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
         E_lattice = lattice_energy(lattice, eps, muT, muB)
-        E_unmix = lattice_energy(create_unmix_lattice(size,0, B_num_in)[0], eps, muT, muB) +lattice_energy(create_unmix_lattice(size,T_num_in, 0)[0], eps, muT, muB) 
+        #E_unmix = lattice_energy(create_unmix_lattice(size,0, B_num_in)[0], eps, muT, muB) +lattice_energy(create_unmix_lattice(size,T_num_in, 0)[0], eps, muT, muB) 
         B_num_for_Temp = np.zeros(num_runs, dtype = int)
         B_num = B_num_in
         #gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
-            E_history_for_Temp_unmix.append(E_unmix)
+            #E_history_for_Temp_unmix.append(E_unmix)
             #print(i)
             if np.all(pos0 < 0): # if no holes -> only attempt remove B 
                 lattice, pos2, pos0, E_lattice, B_num = evaluate_particle_removeB(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
@@ -362,18 +396,18 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                 selected_function = random.choice([evaluate_particle_addB, evaluate_particle_removeB])
                 lattice, pos2, pos0, E_lattice, B_num = selected_function(lattice, pos2, pos0, t, E_lattice, eps, muB, B_num)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
-            E_history_for_Temp_unmix[i] = lattice_energy(create_unmix_lattice(size,0, B_num[-1])[0], eps, muT, muB) +lattice_energy(create_unmix_lattice(size,T_num[-1], 0)[0], eps, muT, muB) 
+            #E_history_for_Temp_unmix[i] = lattice_energy(create_unmix_lattice(size,0, B_num[-1])[0], eps, muT, muB) +lattice_energy(create_unmix_lattice(size,T_num[-1], 0)[0], eps, muT, muB) 
             B_num_for_Temp[i] = B_num
         #gridprint(lattice)
         B_num_history.append(B_num_for_Temp)     
-        T_num[ind] = np.sum((pos1 != -1).all(axis=0))
+        #T_num[ind] = np.sum((pos1 != -1).all(axis=0))
         E_history[t] = E_history_for_Temp.copy()
   
     # Unique name for data file 
     current_datetime = datetime.now()
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
     run_name = f'{datetime_str}'
-    print(E_history_for_Temp_unmix)
+    #print(E_history_for_Temp_unmix)
     return lattice, E_history, B_num_history, T_num, run_name #, pos0_hist, pos1_hist, pos2_hist
 
 #%%
@@ -408,6 +442,17 @@ interaction_matrix = np.array([
 
 #%%
 lattice, E_history, B_num_history, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
+# Convert the list to a NumPy array
+#print(type(int(B_num_history[0][-1])), B_num_history[-1])
+B_num_history_array = np.array(B_num_history)
+''' '''
+E_unmix = np.zeros(T.size)
+for i in range(T.size):
+    #print("hi")
+    E_unmix[i] = lattice_energy(create_unmix_lattice(size, 0, int(B_num_history[i][-1]) )[0], interaction_matrix, muT, muB) + lattice_energy(create_unmix_lattice(size, T_num_in, 0)[0], interaction_matrix, muT, muB)
+    #E_unmix[i] = lattice_energy(create_unmix_lattice(size, 0, B_num_history_array[i])[0], interaction_matrix, muT, muB) + lattice_energy(create_unmix_lattice(size, T_num, 0)[0], interaction_matrix, muT, muB)
+    #E_unmix[i] =lattice_energy(create_unmix_lattice(lattice, 0,B_num_history_array[i])[0], interaction_matrix, muT,muB)+lattice_energy(create_unmix_lattice(lattice, T_num,0)[0], interaction_matrix, muT,muB)
+print(E_unmix)
 #%%
 def B_num_plot(B_num_history, T, size, T_num_in):
     yMin = 0
