@@ -363,7 +363,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
             #T_num[ind, i] = np.count_nonzero(lattice == 1)         
            # Num_for_Temp[selec_idx,i] = Num[selec_idx]
            # T_num_for_Temp[i] = T_num
-#        gridprint(lattice)
+        gridprint(lattice)
         #B_num_history.append(B_num_for_Temp)     
        # Num_history[selec_idx].append(Num_for_Temp)
         gridprint(lattice)
@@ -385,14 +385,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # the body is modelled by an N by N lattice
 
 num_runs = 10_000
-T_interval1 = np.arange(20, 10, -1)
+#T_interval1 = np.arange(20, 10, -1)
 T_interval2 = np.arange(10, 3, -0.5)
 T_interval3 = np.arange(3, 0.2, -0.2)
 #T = np.concatenate((T_interval1, T_interval2, T_interval3))
-T = np.arange(1, 0.8, -0.1)
-#T = np.arange(20, 0.1, -1)
-#T = np.arange(1,0.01,-0.5)
-#T = np.arange(.1,.01,-0.1) ##Test
+T = np.concatenate(T_interval2, T_interval3)
 size = 100
 
 #T_num_in = int(size**2/2)    # number of initial T-cells
@@ -400,9 +397,9 @@ T_num_in  = int(1)
 B_num_in = int(1)
 muT, muB = -1, -2.1
 
-BB_int = -1     # interaction energy between bacterias
-TT_int = -1      # interaction energy between T-cells
-BT_int = 4     # interaction energy between bacteria and T-cells
+BB_int = 1     # interaction energy between bacterias
+TT_int = 1      # interaction energy between T-cells
+BT_int = -2     # interaction energy between bacteria and T-cells
 interaction_matrix = np.array([
     [0, 0, 0],
     [0, TT_int, BT_int],
@@ -438,7 +435,7 @@ def num_plot(num_history, T, size):
         T_formatted = f'{T[i]:.2f}'
         ax.plot(np.arange(0, n), B_num_history[i], color = 'red', markersize = '0.5')
         ax.plot(np.arange(0, n), T_num_history[i], color ='blue', markersize = '0.5' )
-       # ax.set_yticks(np.arange(yMin, yMax, step = int(yMax/10)))
+        ax.set_yticks(np.arange(yMin, yMax, step = int(yMax/10)))
         ax.set_ylabel(f'N, T = {T_formatted}')
     plt.tight_layout()
     plt.show()
