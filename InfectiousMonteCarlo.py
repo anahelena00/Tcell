@@ -1,14 +1,11 @@
 
 #%%
 
-
 import numpy as np
 import random
 import matplotlib.pyplot as plt
 import numba
 from datetime import datetime
-
-
 
 #%%
 
@@ -325,7 +322,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
     run_name = f'{datetime_str}'
     
-    return lattice, E_history, B_num_history, T_num, run_name #, pos0_hist, pos1_hist, pos2_hist
+    return lattice, E_history, B_num_history, T_num, run_name 
 
 #%%
 
@@ -344,7 +341,7 @@ T = np.concatenate((T_interval1, T_interval2)) #, T_interval3))
 size = 50
 
 #T_num_in = int(size**2/2)    # number of initial T-cells
-T_num_in  = int(size**2/3)
+T_num_in  = int(size**2/4)
 B_num_in = int(1)
 muT, muB = -1, -2.1
 
@@ -393,7 +390,7 @@ def mean_energy(T, E_history, ind_equilibrium):
 
     return E_mean, E_variance
 
-ind_equi = int((0.6)*num_runs) # index where equilibrium is assumed. 
+ind_equi = int((0.7)*num_runs) # index where equilibrium is assumed. 
 E_mean, E_var = mean_energy(T, E_history, ind_equi)
 
 #%%
@@ -432,7 +429,7 @@ plt.show()
 #%%
 # SAVE DATA 
 
-file_spec = '1e5_T033_B1'   # extra info for filename. Customize
+file_spec = '1e5_T025_B1'   # extra info for filename. Customize
 file_name = f'{run_name}_{file_spec}.npz'
 
 np.savez(file_name, 
