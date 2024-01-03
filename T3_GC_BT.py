@@ -296,20 +296,27 @@ def gridprint(lattice):
 def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None):
     
     E_history = {}
-    T_num_history = []
-    B_num_history = []
-    Num_history = [T_num_history, B_num_history]
+    #T_num_history = []
+    #B_num_history = []
+    #Num_history = [T_num_history, B_num_history]
+    Num_history = {'T': [], 'B': []}
     for ind, t in enumerate(Temp):
         E_history_for_Temp = []
         lattice, pos1, pos2, pos0 = create_lattice(lattice_length, T_num_in, B_num_in)
         pos = [pos1, pos2]
         E_lattice = lattice_energy(lattice, eps, muT, muB)
-        B_num_for_Temp = np.zeros(num_runs, dtype = int)
-        T_num_for_Temp = np.zeros(num_runs, dtype = int)
-        Num_for_Temp = [B_num_for_Temp, T_num_for_Temp]
-        B_num = B_num_in
-        T_num = T_num_in
-        Num = [T_num, B_num]
+        #B_num_for_Temp = np.zeros(num_runs, dtype = int)
+        #T_num_for_Temp = np.zeros(num_runs, dtype = int)
+        #Num_for_Temp = [B_num_for_Temp, T_num_for_Temp]
+        #B_num = B_num_in
+        #T_num = T_num_in
+        #Num = [T_num, B_num]
+        Num_for_Temp = {'T': (np.zeros(num_runs+1, dtype = int)),
+                        'B': (np.zeros(num_runs+1, dtype = int))}
+        #B_num = B_num_in
+        #T_num = T_num_in
+        Num_for_Temp['T'][0] = T_num_in
+        Num_for_Temp['B'][0] = B_num_in
         #gridprint(lattice)
         for i in range(0,num_runs): # change to from one and append initial E and lattice to outisde
             E_history_for_Temp.append(E_lattice)
@@ -320,7 +327,9 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
             #selected_position = [pos1, pos2][selected_position_index]
             selected_mu = [muT, muB][selec_idx]
            # selected_num = [T_num, B_num][selec_idx]
-            selected_num_for_Temp = [T_num_for_Temp, B_num_for_Temp][selec_idx]
+            Num_for_Temp['T'][i+1] = Num_for_Temp['T'][i]
+            Num_for_Temp['B'][i+1] = Num_for_Temp['B'][i]
+           # selected_num_for_Temp = [T_num_for_Temp, B_num_for_Temp][selec_idx]
            # selected_num_history = [T_num_history, B_num_history][selec_idx]
 
 
@@ -328,13 +337,13 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                 if np.all(pos[selec_idx] < 0):
                     pass
                 else:
-                    lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = evaluate_particle_remove(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
+                    lattice, pos[selec_idx], pos0, E_lattice,  Num_for_Temp[('B', 'T')[selec_idx]][i + 1]  = evaluate_particle_remove(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num_for_Temp[('B', 'T')[selec_idx]][i], selec_idx)
                 
                 #print("Lattice is full at iteration:", i)
                # print(pos0)
             elif np.all(pos0 > 0): # if no B's -> only attempt move T and add B 
                 #assert np.any(pos0 > 0), f"when adding T there was no 0)"
-                lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = evaluate_particle_add(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
+                lattice, pos[selec_idx], pos0, E_lattice, Num_for_Temp[('B', 'T')[selec_idx]][i + 1]  = evaluate_particle_add(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num_for_Temp[('B', 'T')[selec_idx]][i], selec_idx)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}"  
                # print(pos0)              
             else: # attempt all 
@@ -344,22 +353,24 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
                     pass
                 else:
                     selected_function = random.choice([evaluate_particle_add, evaluate_particle_remove])
-                    lattice, pos[selec_idx], pos0, E_lattice, Num[selec_idx] = selected_function(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num[selec_idx], selec_idx)
+                    lattice, pos[selec_idx], pos0, E_lattice,  Num_for_Temp[('B', 'T')[selec_idx]][i + 1]  = selected_function(lattice, pos[selec_idx], pos0, t, E_lattice, eps, selected_mu, Num_for_Temp[('B', 'T')[selec_idx]][i], selec_idx)
                 #assert B_num + T_num_in <= lattice_length**2, f"To many B's. {B_num}" 
                 #print(pos0)
-            Num_for_Temp[selec_idx][i] = Num[selec_idx]
+        #    Num_for_Temp[selec_idx][i] = Num[selec_idx]
            # T_num_for_Temp[i] = T_num
         gridprint(lattice)
         #B_num_history.append(B_num_for_Temp)     
-        Num_history.append(Num_for_Temp)
+     #   Num_history.append(Num_for_Temp)
         E_history[t] = E_history_for_Temp.copy()
+        Num_history['T'].append(Num_for_Temp['T'])
+        Num_history['B'].append(Num_for_Temp['B'])
   
     # Unique name for data file 
     current_datetime = datetime.now()
     datetime_str = current_datetime.strftime('%Y%m%d-%H-%M')    
     run_name = f'{datetime_str}'
     
-    return lattice, E_history, B_num_history, T_num, run_name 
+    return lattice, E_history, Num_history, run_name 
 
 #%%
 
@@ -367,7 +378,7 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10_000
+num_runs = 1000
 T_interval1 = np.arange(20, 10, -1)
 T_interval2 = np.arange(10, 3, -0.5)
 T_interval3 = np.arange(3, 0.2, -0.2)
@@ -393,9 +404,16 @@ interaction_matrix = np.array([
 ])
 
 #%%
-lattice, E_history, B_num_history, T_num_history, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
+lattice, E_history, num_history, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
+
 #%%
-def B_num_plot(B_num_history, T, size):
+
+T_num_history = num_history['T']
+B_num_history = num_history['B']
+def num_plot(num_history, T, size):
+    T_num_history = num_history['T']
+    B_num_history = num_history['B']
+    n = len(B_num_history[0])
     yMin = 0
     yMax = size**2
     num_cols = 2
@@ -405,12 +423,14 @@ def B_num_plot(B_num_history, T, size):
     for i in range(len(T)):
         ax = axes[i]
         T_formatted = f'{T[i]:.2f}'
-        ax.plot(np.arange(0, num_runs), B_num_history[i], '.', markersize = '0.5')
+        ax.plot(np.arange(0, n), B_num_history[i], color = 'red', markersize = '0.5')
+        ax.plot(np.arange(0, n), T_num_history[i], color ='blue', markersize = '0.5' )
         ax.set_yticks(np.arange(yMin, yMax, step = int(yMax/10)))
-        ax.set_ylabel(f'N_B, T = {T_formatted}')
+        ax.set_ylabel(f'N, T = {T_formatted}')
     plt.tight_layout()
     plt.show()
-B_num_plot(B_num_history, T, size)
+num_plot(num_history, T, size)
+
 
 
 #%%
