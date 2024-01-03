@@ -384,12 +384,12 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 10_000
-#T_interval1 = np.arange(20, 10, -1)
+num_runs = 100
+T_interval1 = np.arange(1, 10, -1)
 T_interval2 = np.arange(10, 3, -0.5)
 T_interval3 = np.arange(3, 0.2, -0.2)
-#T = np.concatenate((T_interval1, T_interval2, T_interval3))
-T = np.concatenate(T_interval2, T_interval3)
+T = np.concatenate((T_interval1, T_interval2, T_interval3))
+#T = np.concatenate(T_interval2, T_interval3)
 size = 100
 
 #T_num_in = int(size**2/2)    # number of initial T-cells
