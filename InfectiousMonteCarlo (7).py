@@ -416,8 +416,8 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 1_000
-T_interval1 = np.arange(2, 1, -0.2)
+num_runs = 100_000
+T_interval1 = np.arange(20, 1, -0.2)
 T_interval2 = np.arange(1, 0.1, -0.1)
 #T_interval3 = np.arange(3, 0.2, -0.2)
 T = np.concatenate((T_interval1, T_interval2)) #, T_interval3))
@@ -452,7 +452,7 @@ for i in range(T.size):
     E_unmix[i] = lattice_energy(create_unmix_lattice(size, 0, int(B_num_history[i][-1]) )[0], interaction_matrix, muT, muB) + lattice_energy(create_unmix_lattice(size, T_num_in, 0)[0], interaction_matrix, muT, muB)
     #E_unmix[i] = lattice_energy(create_unmix_lattice(size, 0, B_num_history_array[i])[0], interaction_matrix, muT, muB) + lattice_energy(create_unmix_lattice(size, T_num, 0)[0], interaction_matrix, muT, muB)
     #E_unmix[i] =lattice_energy(create_unmix_lattice(lattice, 0,B_num_history_array[i])[0], interaction_matrix, muT,muB)+lattice_energy(create_unmix_lattice(lattice, T_num,0)[0], interaction_matrix, muT,muB)
-print(E_unmix)
+#print(E_unmix)
 #%%
 def B_num_plot(B_num_history, T, size, T_num_in):
     yMin = 0
@@ -542,7 +542,8 @@ np.savez(file_name,
          ind_equi = ind_equi,
          E_mean = E_mean,
          E_var = E_var,
-         num_runs = num_runs,        
+         num_runs = num_runs,
+         E_unmix =E_unmix        
         )
 print(file_name)
 
