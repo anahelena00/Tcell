@@ -370,8 +370,8 @@ def B_num_plot(B_num_history, T, size, T_num_in):
     for i in range(len(T)):
         ax = axes[i]
         T_formatted = f'{T[i]:.2f}'
-        ax.plot(np.arange(0, num_runs), B_num_history[i], color = 'blue', markersize = '0.5')
-        ax.plot(np.arange(0, num_runs), np.ones(num_runs)*T_num_in, color = 'red', '.', markersize = '0.5')
+        ax.plot(np.arange(0, num_runs), B_num_history[i], '.', color = 'blue', markersize = '0.5')
+        ax.plot(np.arange(0, num_runs), np.ones(num_runs)*T_num_in, '.', color = 'red', markersize = '0.5')
         ax.set_yticks(np.arange(yMin, yMax, step = int(yMax/10)))
         ax.set_ylabel(f'N_B, T = {T_formatted}')
     plt.tight_layout()
