@@ -5,7 +5,7 @@ import math as math
 import matplotlib.pyplot as plt
 
 #%% 
-file_name = '20240101-00-09_7e4_T0_B1.npz'
+file_name = '20240103-04-54_1e5_BT_size100.npz'
 #file_name = '20231231-19-47_7e4_T033_B1_s50.npz'
 #file_name = '20231231-20-11_7e4_T033_B1_s70.npz'
 #file_name = '20231231-20-39_7e4_T033_B1_s100.npz'
@@ -137,5 +137,30 @@ plt.legend()
 #plt.savefig(f'Runs_data/{datetime_str}Cv.png')
 plt.show()
 
+
+# %%
+
+# Fit Cv and find Cv Max
+
+fit_grad_list = []
+fit_var_list = []
+T_for_fit = np.linspace(min(T), max(T), 500)
+for run_idx in range(Cv_grad.shape[1]):
+    
+    fit_grad = np.poly1d(np.polyfit(T, Cv_grad[:,run_idx], 3))
+    fit_grad_list.append(fit_grad)
+    fit_var = np.poly1d(np.polyfit(T, Cv_var[:,run_idx],  3))
+    fit_var_list.append(fit_var)
+    
+    plt.figure()
+    plt.plot(T, Cv_grad[:,run_idx], 'o', color = 'orange', label = 'From gradient')
+    plt.plot(T_for_fit, fit_grad(T_for_fit), color='C3', label = 'gradient fit')
+    plt.plot(T, Cv_var[:,run_idx], '.', markersize=10, color = 'darkblue', label = 'From variance')
+    plt.plot(T_for_fit, fit_var(T_for_fit), color = 'darkturquoise', label = 'variance fit')
+    plt.xlabel('Temperature')
+    plt.ylabel('$C_{V}$')
+    plt.title(f'density={B_rho[run_idx]}, Iterations per T: {num_runs}')
+    plt.legend()
+    plt.show()
 
 # %%
