@@ -333,11 +333,11 @@ def monte_carlo(Temp, eps, lattice_length, T_num_in, B_num_in, muT, muB, num_run
 # if surrounded by T cells -> no division
 # the body is modelled by an N by N lattice
 
-num_runs = 1_000
-T_interval1 = np.arange(20, 10, -1)
-T_interval2 = np.arange(10, 3, -0.5)
-T_interval3 = np.arange(3, 0.2, -0.2)
-T = np.concatenate((T_interval1, T_interval2, T_interval3))
+num_runs = 100_000
+T_interval1 = np.arange(2, 1, -0.2)
+T_interval2 = np.arange(1, 0.1, -0.1)
+#T_interval3 = np.arange(3, 0.2, -0.2)
+T = np.concatenate((T_interval1, T_interval2)) #, T_interval3))
 #T = np.arange(20, 0.1, -1)
 #T = np.arange(1,0.01,-0.5)
 #T = np.arange(.1,.01,-0.1) ##Test
@@ -350,7 +350,7 @@ muT, muB = -1, -2.1
 
 BB_int = -1     # interaction energy between bacterias
 TT_int = -1      # interaction energy between T-cells
-BT_int = 4     # interaction energy between bacteria and T-cells
+BT_int = -2     # interaction energy between bacteria and T-cells
 interaction_matrix = np.array([
     [0, 0, 0],
     [0, TT_int, BT_int],
@@ -360,7 +360,7 @@ interaction_matrix = np.array([
 #%%
 lattice, E_history, B_num_history, T_num, run_name = monte_carlo(T, interaction_matrix, size, T_num_in, B_num_in, muT, muB, num_runs, num_lattices_to_store=None)
 #%%
-def B_num_plot(B_num_history, T, size):
+def B_num_plot(B_num_history, T, size, T_num_in):
     yMin = 0
     yMax = size**2
     num_cols = 2
@@ -370,12 +370,13 @@ def B_num_plot(B_num_history, T, size):
     for i in range(len(T)):
         ax = axes[i]
         T_formatted = f'{T[i]:.2f}'
-        ax.plot(np.arange(0, num_runs), B_num_history[i], '.', markersize = '0.5')
+        ax.plot(np.arange(0, num_runs), B_num_history[i], color = 'blue', markersize = '0.5')
+        ax.plot(np.arange(0, num_runs), np.ones(num_runs)*T_num_in, color = 'red', '.', markersize = '0.5')
         ax.set_yticks(np.arange(yMin, yMax, step = int(yMax/10)))
         ax.set_ylabel(f'N_B, T = {T_formatted}')
     plt.tight_layout()
     plt.show()
-B_num_plot(B_num_history, T, size)
+B_num_plot(B_num_history, T, size, T_num_in)
 
 
 #%%
@@ -392,7 +393,7 @@ def mean_energy(T, E_history, ind_equilibrium):
 
     return E_mean, E_variance
 
-ind_equi = int((0.7)*num_runs) # index where equilibrium is assumed. 
+ind_equi = int((0.6)*num_runs) # index where equilibrium is assumed. 
 E_mean, E_var = mean_energy(T, E_history, ind_equi)
 
 #%%
